@@ -24,7 +24,7 @@ if(WIN32)
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
   list(FILTER media_service_win_sources INCLUDE REGEX "/platform/win/")
   target_sources(mediaService PRIVATE ${media_service_win_sources})
-  target_include_directories(mediaService PRIVATE "${BIGOSTREAMER_ROOT}/..")
+  target_include_directories(mediaService PRIVATE "${FOLIO_ROOT}/..")
   target_compile_definitions(mediaService PRIVATE YYMOBILE_WIN32=1)
 endif()
 
@@ -41,7 +41,7 @@ target_include_directories(mediaService PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
 target_link_libraries(mediaService PRIVATE
-  bigostreamer_options
+  folio_options
   FlatBuffers::Headers
   liveUtils
   user32

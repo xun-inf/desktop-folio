@@ -22,6 +22,7 @@ public:
     void environmentCleanup();
     size_t subscriptionCount() const;
     void dispose(uint32_t id);
+
 protected:
     void requireReady() const;
     uint32_t subscribe(const std::string& event, napi_value callback);
@@ -30,17 +31,25 @@ protected:
     virtual void onInitialize();
     virtual void onShutdown();
     napi_env environment() const;
+
 private:
     struct Subscription
     {
         std::string event;
         napi_ref callback;
-        Subscription(const std::string& name, napi_ref reference) : event(name), callback(reference) {}
+        Subscription(const std::string& name, napi_ref reference) : event(name), callback(reference)
+        {
+        }
     };
-    enum class State { Created, Ready, Closed };
+    enum class State
+    {
+        Created,
+        Ready,
+        Closed
+    };
     napi_env m_env;
     State m_state;
     uint32_t m_nextSubscription;
     std::map<uint32_t, Subscription> m_subscriptions;
 };
-}
+} // namespace node_bizmodules

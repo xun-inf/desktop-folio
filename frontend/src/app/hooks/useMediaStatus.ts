@@ -6,10 +6,18 @@ export function useMediaStatus(): MediaStatus {
   const [status, setStatus] = useState<MediaStatus>({ connected: false, message: '' });
   useEffect(() => {
     let disposed = false;
-    const update = (value: MediaStatus) => { if (!disposed) setStatus(value); };
-    const unsubscribe = window.bigoMediaService.media.subscribeStatus(update);
-    void window.bigoMediaService.media.getStatus().then(update).catch(() => {});
-    return () => { disposed = true; unsubscribe(); };
+    const update = (value: MediaStatus) => {
+      if (!disposed) setStatus(value);
+    };
+    const unsubscribe = window.folioMediaService.media.subscribeStatus(update);
+    void window.folioMediaService.media
+      .getStatus()
+      .then(update)
+      .catch(() => {});
+    return () => {
+      disposed = true;
+      unsubscribe();
+    };
   }, []);
   return status;
 }

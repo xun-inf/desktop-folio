@@ -14,22 +14,21 @@ void increment(uint64_t& value, uint64_t amount = 1)
     const uint64_t maximum = std::numeric_limits<uint64_t>::max();
     value = amount > maximum - value ? maximum : value + amount;
 }
-}
+} // namespace
 
 std::shared_ptr<Service> StreamPreviewService::createService(IpcServer* server, EventLoop*)
 {
     return std::shared_ptr<Service>(new StreamPreviewService(server));
 }
 
-StreamPreviewService::StreamPreviewService(IpcServer* server)
-    : ServiceBase(server)
+StreamPreviewService::StreamPreviewService(IpcServer* server) : ServiceBase(server)
 {
-    this->registerMethod<services::CreateStreamPreviewArgs>(
-        "createStreamPreview", &StreamPreviewService::createStreamPreview);
-    this->registerMethod<services::ReleaseStreamPreviewArgs>(
-        "releaseStreamPreview", &StreamPreviewService::releaseStreamPreview);
-    this->registerMethod<services::ReleaseVideoFrameArgs>(
-        "releaseVideoFrame", &StreamPreviewService::releaseVideoFrame);
+    this->registerMethod<services::CreateStreamPreviewArgs>("createStreamPreview",
+                                                            &StreamPreviewService::createStreamPreview);
+    this->registerMethod<services::ReleaseStreamPreviewArgs>("releaseStreamPreview",
+                                                             &StreamPreviewService::releaseStreamPreview);
+    this->registerMethod<services::ReleaseVideoFrameArgs>("releaseVideoFrame",
+                                                          &StreamPreviewService::releaseVideoFrame);
     initialize();
 }
 
@@ -38,8 +37,7 @@ StreamPreviewService::~StreamPreviewService()
     closeAll();
 }
 
-bool StreamPreviewService::createStreamPreview(const services::CreateStreamPreviewArgs& args,
-                                               ReplyWriter& reply)
+bool StreamPreviewService::createStreamPreview(const services::CreateStreamPreviewArgs& args, ReplyWriter& reply)
 {
     if (create(args.id()) == nullptr)
     {
@@ -50,41 +48,39 @@ bool StreamPreviewService::createStreamPreview(const services::CreateStreamPrevi
     return true;
 }
 
-bool StreamPreviewService::releaseStreamPreview(const services::ReleaseStreamPreviewArgs& args,
-                                                ReplyWriter& reply)
+bool StreamPreviewService::releaseStreamPreview(const services::ReleaseStreamPreviewArgs& args, ReplyWriter& reply)
 {
     release(args.id());
     replyOk(reply);
     return true;
 }
 
-bool StreamPreviewService::releaseVideoFrame(const services::ReleaseVideoFrameArgs& args,
-                                             ReplyWriter& reply)
+bool StreamPreviewService::releaseVideoFrame(const services::ReleaseVideoFrameArgs& args, ReplyWriter& reply)
 {
     releaseFrame(args.id(), args.token());
     replyOk(reply);
     return true;
 }
 
-void StreamPreviewService::emitFrameEvent(std::uint32_t id, std::uint64_t token,
-                                           std::uint64_t handle, std::uint32_t width,
-                                           std::uint32_t height, std::int64_t timestampUs)
+void StreamPreviewService::emitFrameEvent(std::uint32_t id, std::uint64_t token, std::uint64_t handle,
+                                          std::uint32_t width, std::uint32_t height, std::int64_t timestampUs)
 {
-    this->emit<services::FrameEvent>("frame",
-        [id, token, handle, width, height, timestampUs](flatbuffers::FlatBufferBuilder& builder)
-        {
-            return services::CreateFrameEvent(builder, id, token, handle, width, height, timestampUs);
-        });
+    this->emit<services::FrameEvent>(
+        "frame", [id, token, handle, width, height, timestampUs](flatbuffers::FlatBufferBuilder& builder)
+        { return services::CreateFrameEvent(builder, id, token, handle, width, height, timestampUs); });
 }
 
 // --- 预览管理（原 StreamPreviewMgr）---
 bool StreamPreviewService::initialize()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    if (m_stats.closing) return false;
-    if (!m_stats.terminal) return true;
+    if (m_stats.closing)
+        return false;
+    if (!m_stats.terminal)
+        return true;
     if (m_stats.activeSubmissions != 0 || !m_presenters.empty() || !m_frames.empty() ||
-        m_stats.generation == std::numeric_limits<uint64_t>::max()) return false;
+        m_stats.generation == std::numeric_limits<uint64_t>::max())
+        return false;
     const uint64_t generation = m_stats.generation + 1;
     m_stats = Stats();
     m_stats.generation = generation;
@@ -96,10 +92,13 @@ std::shared_ptr<StreamPreview> StreamPreviewService::create(uint32_t id)
     uint64_t serial = 0, generation = 0, session = 0;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_stats.terminal) return {};
+        if (m_stats.terminal)
+            return {};
         const auto current = m_presenters.find(id);
-        if (current != m_presenters.end()) return current->second.value;
-        if (m_presenters.size() >= 32 || m_nextSerial == 0) return {};
+        if (current != m_presenters.end())
+            return current->second.value;
+        if (m_presenters.size() >= 32 || m_nextSerial == 0)
+            return {};
         serial = m_nextSerial++;
         generation = m_stats.generation;
         session = server()->session();
@@ -130,7 +129,8 @@ std::shared_ptr<StreamPreview> StreamPreviewService::create(uint32_t id)
                 sent = true;
                 {
                     std::lock_guard<std::mutex> guard(m_mutex);
-                    if (sent) increment(m_stats.published);
+                    if (sent)
+                        increment(m_stats.published);
                     else
                     {
                         const auto published = m_frames.find(frame.token);
@@ -166,14 +166,21 @@ std::shared_ptr<StreamPreview> StreamPreviewService::create(uint32_t id)
                         increment(m_stats.droppedPublications);
                     }
                 }
-                catch (...) { /* Broken mutex: final lifecycle still owns records. */ }
+                catch (...)
+                { /* Broken mutex: final lifecycle still owns records. */
+                }
                 return sent;
             }
         },
         [id](const std::string& message) noexcept
         {
-            try { mediaservice::logger().logError("streampreview", std::to_string(id) + ": " + message); }
-            catch (...) { /* Error reporting cannot escape the GPU worker. */ }
+            try
+            {
+                mediaservice::logger().logError("streampreview", std::to_string(id) + ": " + message);
+            }
+            catch (...)
+            { /* Error reporting cannot escape the GPU worker. */
+            }
         });
     std::shared_ptr<StreamPreview> selected;
     {
@@ -181,7 +188,8 @@ std::shared_ptr<StreamPreview> StreamPreviewService::create(uint32_t id)
         if (!m_stats.terminal && m_stats.generation == generation && server()->session() == session)
         {
             const auto current = m_presenters.find(id);
-            if (current != m_presenters.end()) selected = current->second.value;
+            if (current != m_presenters.end())
+                selected = current->second.value;
             else if (m_presenters.size() < 32)
             {
                 m_presenters.emplace(id, Presenter {candidate, serial});
@@ -189,7 +197,8 @@ std::shared_ptr<StreamPreview> StreamPreviewService::create(uint32_t id)
             }
         }
     }
-    if (selected != candidate) candidate->close();
+    if (selected != candidate)
+        candidate->close();
     return selected;
 }
 
@@ -202,19 +211,29 @@ StreamPreviewService::Submission StreamPreviewService::submitFrameToAll(const Vi
         std::lock_guard<std::mutex> lock(m_mutex);
         increment(m_stats.submittedFrames);
         result.terminal = m_stats.terminal;
-        if (result.terminal) return result;
+        if (result.terminal)
+            return result;
         presenters.reserve(m_presenters.size());
-        for (const auto& entry : m_presenters) presenters.push_back(entry.second.value);
+        for (const auto& entry : m_presenters)
+            presenters.push_back(entry.second.value);
         ++m_stats.activeSubmissions;
     }
     for (const auto& presenter : presenters)
     {
         VideoSubmitResult outcome = VideoSubmitResult::InvalidFrame;
-        try { outcome = presenter->submitFrame(frame, owner); }
-        catch (...) { /* A failed consumer cannot prevent other consumers. */ }
-        if (outcome == VideoSubmitResult::Accepted) ++result.accepted;
-        else if (outcome == VideoSubmitResult::Closed) ++result.retired;
-        else ++result.rejected;
+        try
+        {
+            outcome = presenter->submitFrame(frame, owner);
+        }
+        catch (...)
+        { /* A failed consumer cannot prevent other consumers. */
+        }
+        if (outcome == VideoSubmitResult::Accepted)
+            ++result.accepted;
+        else if (outcome == VideoSubmitResult::Closed)
+            ++result.retired;
+        else
+            ++result.rejected;
     }
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -242,7 +261,8 @@ void StreamPreviewService::release(uint32_t id)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         const auto it = m_presenters.find(id);
-        if (it == m_presenters.end()) return;
+        if (it == m_presenters.end())
+            return;
         presenter = std::move(it->second.value);
         m_presenters.erase(it);
     }
@@ -257,13 +277,16 @@ void StreamPreviewService::releaseFrame(uint32_t id, uint64_t token)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         const auto frame = m_frames.find(token);
-        if (frame == m_frames.end() || frame->second.id != id) return;
+        if (frame == m_frames.end() || frame->second.id != id)
+            return;
         resource = std::move(frame->second.resource);
         m_frames.erase(frame);
         const auto current = m_presenters.find(id);
-        if (current != m_presenters.end()) presenter = current->second.value;
+        if (current != m_presenters.end())
+            presenter = current->second.value;
     }
-    if (presenter) presenter->releaseFrame(token);
+    if (presenter)
+        presenter->releaseFrame(token);
 }
 
 void StreamPreviewService::closeAll()
@@ -276,7 +299,8 @@ void StreamPreviewService::closeAll()
         m_stats.closing = true;
         presenters.swap(m_presenters);
     }
-    for (auto& entry : presenters) entry.second.value->close();
+    for (auto& entry : presenters)
+        entry.second.value->close();
     decltype(m_frames) frames;
     {
         std::lock_guard<std::mutex> lock(m_mutex);

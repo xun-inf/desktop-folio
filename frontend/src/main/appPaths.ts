@@ -4,7 +4,7 @@
 import path from 'node:path';
 
 export interface AppPaths {
-  // 产物目录：以 UI 进程 exe 所在目录为基准（开发期 electron.exe，产物 bigostreamer.exe）
+  // 产物目录：以 UI 进程 exe 所在目录为基准（开发期 electron.exe，产物 folio.exe）
   appDir: string;
   // 配置目录（图标 / bin 资源）：打包时与 exe 同级（scripts/build.py 铺 config/），
   // 开发期用 --config-dir= 指回仓库
@@ -15,10 +15,7 @@ export interface AppPaths {
   pipeName: string;
 }
 
-export function argValue(
-  name: string,
-  argv: readonly string[] = process.argv,
-): string {
+export function argValue(name: string, argv: readonly string[] = process.argv): string {
   const prefix = '--' + name + '=';
   for (const arg of argv) {
     if (arg.startsWith(prefix)) {
@@ -36,12 +33,9 @@ export function resolvePaths(): AppPaths {
     configDir: argValue('config-dir') || path.join(appDir, 'config'),
     mainLogPath,
     mediaServiceLogPath:
-      argValue('media-service-log') ||
-      path.join(path.dirname(mainLogPath), 'media-service.log'),
+      argValue('media-service-log') || path.join(path.dirname(mainLogPath), 'media-service.log'),
     mediaServiceExe: argValue('media-service-exe') || path.join(appDir, 'media-service.exe'),
     // 每个 UI 进程使用独立的管道名。
-    pipeName:
-      argValue('pipe-name') ||
-      '\\\\.\\pipe\\bigostreamer-' + String(process.pid),
+    pipeName: argValue('pipe-name') || '\\\\.\\pipe\\folio-' + String(process.pid),
   };
 }

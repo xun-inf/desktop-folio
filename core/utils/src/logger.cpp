@@ -69,7 +69,7 @@ std::string processName()
         const DWORD length = ::GetModuleFileNameW(nullptr, path.data(), static_cast<DWORD>(path.size()));
         if (length == 0)
         {
-            return "bigostreamer";
+            return "folio";
         }
         if (length < path.size())
         {
@@ -87,7 +87,7 @@ std::string processName()
         const ssize_t length = ::readlink("/proc/self/exe", path.data(), path.size());
         if (length < 0)
         {
-            return "bigostreamer";
+            return "folio";
         }
         if (static_cast<std::size_t>(length) < path.size())
         {
@@ -98,7 +98,7 @@ std::string processName()
         path.resize(path.size() * 2);
     }
 #else
-    return "bigostreamer";
+    return "folio";
 #endif
 }
 
@@ -116,8 +116,7 @@ std::unique_ptr<spdlog::logger> createLogger(const std::string& logFile)
 #else
         const std::string& path = logFile;
 #endif
-        sinks.emplace_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-            path, kMaxLogFileSize, kMaxLogFiles));
+        sinks.emplace_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>(path, kMaxLogFileSize, kMaxLogFiles));
     }
 
     std::unique_ptr<spdlog::logger> logger(new spdlog::logger(processName(), sinks.begin(), sinks.end()));

@@ -22,14 +22,17 @@ public:
     StreamPreviewService(const StreamPreviewService&) = delete;
     StreamPreviewService& operator=(const StreamPreviewService&) = delete;
 
-    const char* serviceId() const override { return "StreamPreviewService"; }
+    const char* serviceId() const override
+    {
+        return "StreamPreviewService";
+    }
 
     // 统一工厂（services::registerAll 经 Service::Factory 调用）。
     static std::shared_ptr<Service> createService(IpcServer* server, EventLoop* eventLoop);
 
     // 帧事件发送（FrameReady 工作线程回调；线程安全）。
-    void emitFrameEvent(std::uint32_t id, std::uint64_t token, std::uint64_t handle,
-                        std::uint32_t width, std::uint32_t height, std::int64_t timestampUs);
+    void emitFrameEvent(std::uint32_t id, std::uint64_t token, std::uint64_t handle, std::uint32_t width,
+                        std::uint32_t height, std::int64_t timestampUs);
 
     // 应用生命周期线程调用：停止预览并清理在途帧（可重复调用）。
     void closeAll() override;

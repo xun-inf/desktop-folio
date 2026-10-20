@@ -78,12 +78,12 @@ public:
     }
 
     // 发送 InvokeReq 并登记 pending；返回 request_id（0 表示发送失败，deferred 已被拒绝）。
-    uint64_t invoke(const char* serviceId, const char* method, const void* args, std::size_t argsSize,
-                    napi_env env, napi_deferred deferred, InvokeCallback callback);
+    uint64_t invoke(const char* serviceId, const char* method, const void* args, std::size_t argsSize, napi_env env,
+                    napi_deferred deferred, InvokeCallback callback);
 
     // 同步握手调用：阻塞等待 InvokeRsp 字节（空 vector 表示失败/超时）；仅用于连接期握手。
-    std::vector<uint8_t> invokeSync(const char* serviceId, const char* method, const void* args,
-                                    std::size_t argsSize, DWORD timeoutMs);
+    std::vector<uint8_t> invokeSync(const char* serviceId, const char* method, const void* args, std::size_t argsSize,
+                                    DWORD timeoutMs);
 
     // 订阅/取消服务端事件（ServiceEvent）；callback 为空时取消。
     void setEventCallback(const char* serviceId, const char* event, EventCallback callback);
@@ -118,4 +118,3 @@ private:
     std::mutex m_sendMutex;
 };
 } // namespace node_media_service
-

@@ -12,11 +12,11 @@ BEGIN
     BLOCK "040904B0"
     BEGIN
       VALUE "CompanyName", "ZXB"
-      VALUE "FileDescription", "LIVE Streamer 安装程序"
-      VALUE "ProductName", "LIVE Streamer"
+      VALUE "FileDescription", "Folio 安装程序"
+      VALUE "ProductName", "Folio"
       VALUE "ProductVersion", "@PROJECT_VERSION@"
       VALUE "FileVersion", "@PROJECT_VERSION@"
-      VALUE "OriginalFilename", "live-streamer-@PROJECT_VERSION@-windows-x64-setup.exe"
+      VALUE "OriginalFilename", "folio-@PROJECT_VERSION@-windows-x64-setup.exe"
     END
   END
   BLOCK "VarFileInfo"

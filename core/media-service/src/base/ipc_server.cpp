@@ -12,8 +12,7 @@
 // 消息类型：core/schemas/service.fbs 的 MessageType 枚举（None=0 / InvokeReq=1 / InvokeRsp=2 / Event=3）。
 
 // IpcServer implementation
-IpcServer::IpcServer(DisconnectCallback callback)
-    : d_ptr(new IpcServerPrivate(this, std::move(callback)))
+IpcServer::IpcServer(DisconnectCallback callback) : d_ptr(new IpcServerPrivate(this, std::move(callback)))
 {
 }
 
@@ -63,7 +62,7 @@ bool IpcServer::reply(uint64_t requestId, bool success, const std::string& messa
     const auto text = builder.CreateString(message);
     const auto result = resultBytes.empty() ? 0 : builder.CreateVector(resultBytes);
     const auto frame = services::CreateInvokeRsp(builder, services::MessageType_InvokeRsp, serviceId, requestId,
-                                                  session(), success, text, result);
+                                                 session(), success, text, result);
     builder.Finish(frame);
     return send({builder.GetBufferPointer(), builder.GetBufferPointer() + builder.GetSize()});
 }
@@ -75,7 +74,8 @@ bool IpcServer::emitEvent(const std::string& serviceId, const std::string& event
     const auto serviceIdOffset = builder.CreateString(serviceId);
     const auto eventOffset = builder.CreateString(event);
     const auto payload = payloadBytes.empty() ? 0 : builder.CreateVector(payloadBytes);
-    const auto frame = services::CreateServiceEvent(builder, services::MessageType_Event, serviceIdOffset, eventOffset, payload);
+    const auto frame =
+        services::CreateServiceEvent(builder, services::MessageType_Event, serviceIdOffset, eventOffset, payload);
     builder.Finish(frame);
     return send({builder.GetBufferPointer(), builder.GetBufferPointer() + builder.GetSize()});
 }
@@ -100,8 +100,7 @@ void logWarning(const char* message) noexcept
 } // namespace
 
 IpcServerPrivate::IpcServerPrivate(IpcServer* owner, DisconnectCallback callback)
-    : m_owner(owner)
-    , m_disconnectCallback(std::move(callback))
+    : m_owner(owner), m_disconnectCallback(std::move(callback))
 {
 }
 
@@ -132,7 +131,7 @@ bool IpcServerPrivate::reply(uint64_t requestId, bool success, const std::string
     const auto text = builder.CreateString(message);
     const auto result = resultBytes.empty() ? 0 : builder.CreateVector(resultBytes);
     const auto frame = services::CreateInvokeRsp(builder, services::MessageType_InvokeRsp, serviceId, requestId,
-                                                  m_owner->session(), success, text, result);
+                                                 m_owner->session(), success, text, result);
     builder.Finish(frame);
     return send({builder.GetBufferPointer(), builder.GetBufferPointer() + builder.GetSize()});
 }
@@ -181,8 +180,7 @@ bool IpcServerPrivate::dispatchInvoke(const std::vector<uint8_t>& frame) noexcep
         std::vector<std::uint8_t> argsCopy;
         if (invoke->args() != nullptr && invoke->args()->size() != 0)
         {
-            argsCopy.assign(invoke->args()->data(),
-                            invoke->args()->data() + invoke->args()->size());
+            argsCopy.assign(invoke->args()->data(), invoke->args()->data() + invoke->args()->size());
         }
         const std::string frameServiceId = serviceId;
         const std::string frameMethod = method;
@@ -196,12 +194,9 @@ bool IpcServerPrivate::dispatchInvoke(const std::vector<uint8_t>& frame) noexcep
             Service::ReplyWriter writer;
             writer.write = [this, requestId](bool success, const std::string& message,
                                              const std::vector<std::uint8_t>& resultBytes)
-            {
-                reply(requestId, success, message, resultBytes);
-            };
+            { reply(requestId, success, message, resultBytes); };
             const std::uint8_t* args = argsCopy.empty() ? nullptr : argsCopy.data();
-            m_registry->dispatch(frameServiceId.c_str(), frameMethod.c_str(),
-                                 args, argsCopy.size(), writer);
+            m_registry->dispatch(frameServiceId.c_str(), frameMethod.c_str(), args, argsCopy.size(), writer);
         };
 
         // SessionService（握手/退出）在 IPC 线程同步处理，不依赖 UI 线程。

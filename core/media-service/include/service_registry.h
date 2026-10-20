@@ -26,15 +26,13 @@ public:
 
     // 分发一个 InvokeReq：解析 service/method/args 并执行 invoke，
     // 结果通过 reply.write 回执；未知 service 或方法返回 false。
-    bool dispatch(const char* serviceId, const char* method,
-                  const std::uint8_t* args, std::size_t argsSize,
+    bool dispatch(const char* serviceId, const char* method, const std::uint8_t* args, std::size_t argsSize,
                   Service::ReplyWriter& reply);
 
     // 应用退出前统一收口：依次调用已注册 Service 的 closeAll()（应用生命周期线程调用）。
     void closeAll() const;
 
 private:
-
     mutable std::mutex m_mutex;
     std::map<std::string, std::shared_ptr<Service>> m_services;
 };

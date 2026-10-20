@@ -25,7 +25,10 @@ public:
     NativeWindowService(const NativeWindowService&) = delete;
     NativeWindowService& operator=(const NativeWindowService&) = delete;
 
-    const char* serviceId() const override { return "NativeWindowService"; }
+    const char* serviceId() const override
+    {
+        return "NativeWindowService";
+    }
 
     // 统一工厂（services::registerAll 经 Service::Factory 调用；本服务无外部依赖）。
     static std::shared_ptr<Service> createService(IpcServer* server, EventLoop* eventLoop);

@@ -1,10 +1,14 @@
-import type { BigoMainApi, BigoMediaServiceApi, BigoBizModulesApi } from '../preload/preload';
-export type { MediaStatus, NativeWindowRect, StreamPreviewFrameMeta } from '../main/mediaService/contract';
-export type StreamPreviewSubscribe = BigoMediaServiceApi['streamPreviewService']['subscribe'];
+import type { FolioMainApi, FolioMediaServiceApi, FolioBizModulesApi } from '../preload/preload';
+export type {
+  MediaStatus,
+  NativeWindowRect,
+  StreamPreviewFrameMeta,
+} from '../main/mediaService/contract';
+export type StreamPreviewSubscribe = FolioMediaServiceApi['streamPreviewService']['subscribe'];
 declare global {
   interface Window {
-    bigoMain: BigoMainApi;
-    bigoMediaService: BigoMediaServiceApi;
-    bigoBizModules: BigoBizModulesApi;
+    folioMain: FolioMainApi;
+    folioMediaService: FolioMediaServiceApi;
+    folioBizModules: FolioBizModulesApi;
   }
 }

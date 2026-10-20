@@ -34,8 +34,8 @@ std::string wideToUtf8(const std::wstring& value)
     {
         return std::string();
     }
-    const int count = ::WideCharToMultiByte(CP_UTF8, 0, value.c_str(), static_cast<int>(value.size()), nullptr, 0,
-                                            nullptr, nullptr);
+    const int count =
+        ::WideCharToMultiByte(CP_UTF8, 0, value.c_str(), static_cast<int>(value.size()), nullptr, 0, nullptr, nullptr);
     std::string result(static_cast<std::size_t>(count), '\0');
     ::WideCharToMultiByte(CP_UTF8, 0, value.c_str(), static_cast<int>(value.size()), &result[0], count, nullptr,
                           nullptr);
@@ -127,7 +127,8 @@ void statusDisposeFinalizer(napi_env, void* data, void*)
 void statusCallJs(napi_env env, napi_value, void* context, void*)
 {
     // Aborted TSFN queues are drained without a live JavaScript environment.
-    if (env == nullptr || context == nullptr) return;
+    if (env == nullptr || context == nullptr)
+        return;
     ServiceHost* host = static_cast<ServiceHost*>(context);
     host->notifyStatusOnJs();
 }
@@ -286,8 +287,8 @@ bool ServiceHost::startProcess(const ServiceHostOptions& options)
     STARTUPINFOW startupInfo {};
     startupInfo.cb = sizeof(startupInfo);
     PROCESS_INFORMATION processInfo {};
-    if (!::CreateProcessW(options.executable.c_str(), &commandLine[0], nullptr, nullptr, FALSE,
-                          CREATE_NO_WINDOW, nullptr, nullptr, &startupInfo, &processInfo))
+    if (!::CreateProcessW(options.executable.c_str(), &commandLine[0], nullptr, nullptr, FALSE, CREATE_NO_WINDOW,
+                          nullptr, nullptr, &startupInfo, &processInfo))
     {
         return false;
     }
@@ -295,14 +296,15 @@ bool ServiceHost::startProcess(const ServiceHostOptions& options)
     m_process = processInfo.hProcess;
     m_pid = processInfo.dwProcessId;
     m_transport->setChildPid(m_pid);
-    m_processMonitor = std::thread([this]()
-    {
-        ::WaitForSingleObject(m_process, INFINITE);
-        if (!m_stopped.load())
+    m_processMonitor = std::thread(
+        [this]()
         {
-            onDisconnected();
-        }
-    });
+            ::WaitForSingleObject(m_process, INFINITE);
+            if (!m_stopped.load())
+            {
+                onDisconnected();
+            }
+        });
     return true;
 }
 
@@ -311,8 +313,8 @@ bool ServiceHost::handshake(DWORD timeoutMs)
     flatbuffers::FlatBufferBuilder builder;
     const auto args = services::CreateHelloArgs(builder, 1);
     builder.Finish(args);
-    const std::vector<std::uint8_t> frame = m_transport->invokeSync(
-        "SessionService", "hello", builder.GetBufferPointer(), builder.GetSize(), timeoutMs);
+    const std::vector<std::uint8_t> frame =
+        m_transport->invokeSync("SessionService", "hello", builder.GetBufferPointer(), builder.GetSize(), timeoutMs);
     if (frame.empty())
     {
         return false;
@@ -456,8 +458,7 @@ napi_value ServiceHost::stop(napi_env env)
     NMS_NAPI(napi_create_promise)(env, &context->deferred, &promise);
     napi_value resourceName = nullptr;
     NMS_NAPI(napi_create_string_utf8)(env, "media-service-stop", NAPI_AUTO_LENGTH, &resourceName);
-    NMS_NAPI(napi_create_async_work)(env, nullptr, resourceName, stopExecute, stopComplete, context,
-                                     &context->work);
+    NMS_NAPI(napi_create_async_work)(env, nullptr, resourceName, stopExecute, stopComplete, context, &context->work);
     NMS_NAPI(napi_queue_async_work)(env, context->work);
     return promise;
 }
@@ -482,8 +483,7 @@ napi_value ServiceHost::buildStatus(napi_env env)
     property(env, status, "message", string(env, message));
     property(env, status, "phase", string(env, phase));
     property(env, status, "pid", number(env, static_cast<double>(m_pid)));
-    property(env, status, "session",
-             string(env, std::to_string(m_transport ? m_transport->session() : 0)));
+    property(env, status, "session", string(env, std::to_string(m_transport ? m_transport->session() : 0)));
     napi_value nativeClose = object(env);
     property(env, nativeClose, "success", boolean(env, m_stopped.load()));
     property(env, nativeClose, "processPresent", boolean(env, m_process != nullptr));

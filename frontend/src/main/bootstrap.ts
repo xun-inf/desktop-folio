@@ -19,32 +19,62 @@ export function bootstrap(): { start(): Promise<void>; shutdown(): Promise<void>
   logger.initialize(paths.mainLogPath);
   const currentDir = path.dirname(fileURLToPath(import.meta.url));
   const devServerUrl = !app.isPackaged ? process.env.VITE_DEV_SERVER_URL : undefined;
-  const appBaseUrl = devServerUrl || pathToFileURL(path.resolve(currentDir, '..', 'app') + path.sep).href;
-  const devtoolsEnabled = !['0','false','off'].includes(argValue('devtools').toLowerCase());
-  const config = { pageUrls: {
-    Main: new URL('main.html', appBaseUrl).href, Settings: new URL('settings.html', appBaseUrl).href,
-    SecondScreen: new URL('secondscreen.html', appBaseUrl).href,
-  }, preload: path.resolve(currentDir, '..', 'preload', 'preload.cjs') };
+  const appBaseUrl =
+    devServerUrl || pathToFileURL(path.resolve(currentDir, '..', 'app') + path.sep).href;
+  const devtoolsEnabled = !['0', 'false', 'off'].includes(argValue('devtools').toLowerCase());
+  const config = {
+    pageUrls: {
+      Main: new URL('main.html', appBaseUrl).href,
+      Settings: new URL('settings.html', appBaseUrl).href,
+      SecondScreen: new URL('secondscreen.html', appBaseUrl).href,
+    },
+    preload: path.resolve(currentDir, '..', 'preload', 'preload.cjs'),
+  };
   let ipc: ReturnType<typeof registerIpc> | undefined;
-  let closing = false, quitAllowed = false;
+  let closing = false,
+    quitAllowed = false;
   let startPromise: Promise<void> | undefined, shutdownPromise: Promise<void> | undefined;
-  mainWindow.initialize({ paths, preload: config.preload, pageUrl: config.pageUrls.Main,
-    devtoolsEnabled, canClose: () => quitAllowed, onClose: () => { void shutdown(); } });
+  mainWindow.initialize({
+    paths,
+    preload: config.preload,
+    pageUrl: config.pageUrls.Main,
+    devtoolsEnabled,
+    canClose: () => quitAllowed,
+    onClose: () => {
+      void shutdown();
+    },
+  });
   childWindow.initialize({ pageUrl: config.pageUrls.Settings, preload: config.preload });
   async function start(): Promise<void> {
     if (startPromise) return startPromise;
     startPromise = Promise.resolve().then(async () => {
       if (closing) return;
-      logger.info('starting, pid=' + process.pid + ', appDir=' + paths.appDir + ', pipe=' + paths.pipeName);
-      mediaService.install(loadMediaService(path.join(path.dirname(paths.mediaServiceExe), 'node-media-service.node'), {
-        executable: paths.mediaServiceExe, pipeName: paths.pipeName, logPath: paths.mediaServiceLogPath,
-      }));
-      bizModules.install(loadBizModules(path.join(path.dirname(paths.mediaServiceExe), 'node-bizmodules.node')));
+      logger.info(
+        'starting, pid=' + process.pid + ', appDir=' + paths.appDir + ', pipe=' + paths.pipeName,
+      );
+      mediaService.install(
+        loadMediaService(
+          path.join(path.dirname(paths.mediaServiceExe), 'node-media-service.node'),
+          {
+            executable: paths.mediaServiceExe,
+            pipeName: paths.pipeName,
+            logPath: paths.mediaServiceLogPath,
+          },
+        ),
+      );
+      bizModules.install(
+        loadBizModules(path.join(path.dirname(paths.mediaServiceExe), 'node-bizmodules.node')),
+      );
       configurationStore.initialize(path.join(app.getPath('userData'), 'configuration.json'));
       await bizModules.initialize();
       if (closing) return;
-      ipc = registerIpc(config, { configuration: new ConfigurationService(configurationStore), media: mediaService, business: bizModules });
-      mainWindow.create(); childWindow.create();
+      ipc = registerIpc(config, {
+        configuration: new ConfigurationService(configurationStore),
+        media: mediaService,
+        business: bizModules,
+      });
+      mainWindow.create();
+      childWindow.create();
     });
     return startPromise;
   }
@@ -53,13 +83,22 @@ export function bootstrap(): { start(): Promise<void>; shutdown(): Promise<void>
     closing = true;
     shutdownPromise = Promise.resolve().then(async () => {
       const cleanup = async (name: string, action: () => unknown): Promise<void> => {
-        try { await action(); } catch (error) { logger.error(name + ' failed:', error); }
+        try {
+          await action();
+        } catch (error) {
+          logger.error(name + ' failed:', error);
+        }
       };
       await cleanup('window stop', () => popupWindowMgr.stop());
       await cleanup('main window stop', () => mainWindow.stop());
-      await cleanup('IPC stop', () => ipc?.dispose()); ipc = undefined;
+      await cleanup('IPC stop', () => ipc?.dispose());
+      ipc = undefined;
       await cleanup('bizModules shutdown', () => bizModules.shutdown());
-      try { logger.info('bizModules stopped:', bizModules.getStatus()); } catch { /* Startup can fail before install. */ }
+      try {
+        logger.info('bizModules stopped:', bizModules.getStatus());
+      } catch {
+        /* Startup can fail before install. */
+      }
       await cleanup('mediaService stop', () => mediaService.stop());
       quitAllowed = true;
       await cleanup('popup destruction', () => popupWindowMgr.destroy());
@@ -67,7 +106,14 @@ export function bootstrap(): { start(): Promise<void>; shutdown(): Promise<void>
     });
     return shutdownPromise;
   }
-  app.on('before-quit', event => { if (!quitAllowed) { event.preventDefault(); void shutdown(); } });
-  app.on('window-all-closed', () => { void shutdown(); });
+  app.on('before-quit', (event) => {
+    if (!quitAllowed) {
+      event.preventDefault();
+      void shutdown();
+    }
+  });
+  app.on('window-all-closed', () => {
+    void shutdown();
+  });
   return { start, shutdown };
 }

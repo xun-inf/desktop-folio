@@ -55,8 +55,8 @@ bool Transport::connect(const std::wstring& pipePath, DWORD timeoutMs)
     const DWORD started = ::GetTickCount();
     while (true)
     {
-        const HANDLE pipe = ::CreateFileW(pipePath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr,
-                                          OPEN_EXISTING, FILE_FLAG_OVERLAPPED, nullptr);
+        const HANDLE pipe = ::CreateFileW(pipePath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
+                                          FILE_FLAG_OVERLAPPED, nullptr);
         if (pipe != INVALID_HANDLE_VALUE)
         {
             m_pipe = pipe;
@@ -143,10 +143,9 @@ uint64_t Transport::invoke(const char* serviceId, const char* method, const void
     const auto methodOffset = builder.CreateString(method);
     const auto argsOffset = builder.CreateVector(static_cast<const std::uint8_t*>(args), argsSize);
     const auto root = services::CreateInvokeReq(builder, services::MessageType_InvokeReq, serviceIdOffset, methodOffset,
-                                                  requestId, m_session.load(), argsOffset);
+                                                requestId, m_session.load(), argsOffset);
     builder.Finish(root);
-    const std::vector<std::uint8_t> frame(builder.GetBufferPointer(),
-                                          builder.GetBufferPointer() + builder.GetSize());
+    const std::vector<std::uint8_t> frame(builder.GetBufferPointer(), builder.GetBufferPointer() + builder.GetSize());
     {
         std::lock_guard<std::mutex> lock(m_pendingMutex);
         PendingInvoke pending;
@@ -174,10 +173,9 @@ std::vector<uint8_t> Transport::invokeSync(const char* serviceId, const char* me
     const auto methodOffset = builder.CreateString(method);
     const auto argsOffset = builder.CreateVector(static_cast<const std::uint8_t*>(args), argsSize);
     const auto root = services::CreateInvokeReq(builder, services::MessageType_InvokeReq, serviceIdOffset, methodOffset,
-                                                  requestId, m_session.load(), argsOffset);
+                                                requestId, m_session.load(), argsOffset);
     builder.Finish(root);
-    const std::vector<std::uint8_t> frame(builder.GetBufferPointer(),
-                                          builder.GetBufferPointer() + builder.GetSize());
+    const std::vector<std::uint8_t> frame(builder.GetBufferPointer(), builder.GetBufferPointer() + builder.GetSize());
     {
         std::lock_guard<std::mutex> lock(m_pendingMutex);
         PendingInvoke pending;
@@ -303,10 +301,9 @@ void Transport::readLoop()
         {
             break;
         }
-        const std::uint32_t size = static_cast<std::uint32_t>(prefix[0]) |
-                                   (static_cast<std::uint32_t>(prefix[1]) << 8) |
-                                   (static_cast<std::uint32_t>(prefix[2]) << 16) |
-                                   (static_cast<std::uint32_t>(prefix[3]) << 24);
+        const std::uint32_t size =
+            static_cast<std::uint32_t>(prefix[0]) | (static_cast<std::uint32_t>(prefix[1]) << 8) |
+            (static_cast<std::uint32_t>(prefix[2]) << 16) | (static_cast<std::uint32_t>(prefix[3]) << 24);
         if (size > kMaxFrameSize)
         {
             break;
@@ -464,4 +461,3 @@ void Transport::setEventCallback(const char* serviceId, const char* event, Event
     }
 }
 } // namespace node_media_service
-

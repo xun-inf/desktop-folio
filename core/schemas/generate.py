@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""bigostreamer schema + service proxy generator (merged from gen_protos.py / gen_services.py).
+"""folio schema + service proxy generator (merged from gen_protos.py / gen_services.py).
 
 Generates two sets of checked-in artifacts from core/schemas:
 
@@ -49,7 +49,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 SCHEMA_DIR = Path(__file__).resolve().parent
 PROTOS_DIR = ROOT / "core" / "common" / "protos"
 SERVICES_DIR = ROOT / "core" / "node-media-service" / "src" / "services"
-FLATC = ROOT / "build" / "schema" / "_deps" / "bigostreamer_flatc-src" / "flatc.exe"
+FLATC = ROOT / "build" / "schema" / "_deps" / "folio_flatc-src" / "flatc.exe"
 
 NAMESPACE_CLOSE = "\n}  // namespace services\n"
 
@@ -780,7 +780,7 @@ def generate_traits():
 
     media-service 的 ServiceBase<Derived> 用它做"按方法名路由 + 解码 Args + 校验字节"：
     每个 root 表都有 flatc 生成的 Verify<Table>Buffer / Get<Table> 自由函数。
-    所有特化形态完全一致，这里在文件内定义一个宏 BIGO_SCHEMA_ROOT_TABLE 统一展开，
+    所有特化形态完全一致，这里在文件内定义一个宏 FOLIO_SCHEMA_ROOT_TABLE 统一展开，
     新增/删除 root 表只需增删一行宏调用；宏在文件末尾 #undef，不污染其他翻译单元。
     """
     PROTOS_DIR.mkdir(parents=True, exist_ok=True)
@@ -819,8 +819,8 @@ def generate_traits():
         "struct Root;",
         "",
         "// 每个 root 表的特化形态完全一致，用文件内宏展开：",
-        "// 新增/删除 root 表只需增删一行 BIGO_SCHEMA_ROOT_TABLE(<表名>)。",
-        "#define BIGO_SCHEMA_ROOT_TABLE(ROOT)                     " + cont,
+        "// 新增/删除 root 表只需增删一行 FOLIO_SCHEMA_ROOT_TABLE(<表名>)。",
+        "#define FOLIO_SCHEMA_ROOT_TABLE(ROOT)                     " + cont,
         "    template <>                                          " + cont,
         "    struct Root<ROOT>                                    " + cont,
         "    {                                                    " + cont,
@@ -838,10 +838,10 @@ def generate_traits():
         "",
     ]
     for _, root in roots:
-        lines.append("BIGO_SCHEMA_ROOT_TABLE(" + root + ")")
+        lines.append("FOLIO_SCHEMA_ROOT_TABLE(" + root + ")")
     lines += [
         "",
-        "#undef BIGO_SCHEMA_ROOT_TABLE",
+        "#undef FOLIO_SCHEMA_ROOT_TABLE",
         "",
         "} // namespace traits",
         "} // namespace services",

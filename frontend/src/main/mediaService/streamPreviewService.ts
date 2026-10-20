@@ -1,4 +1,9 @@
-import { sharedTexture, type SharedTextureImported, type WebContents, type WebFrameMain } from 'electron';
+import {
+  sharedTexture,
+  type SharedTextureImported,
+  type WebContents,
+  type WebFrameMain,
+} from 'electron';
 import { logger } from '../logger.js';
 import type { Disposable, FrameEvent, StreamPreviewServiceApi } from './addon.js';
 import type { InvokeContext } from './types.js';
@@ -48,12 +53,16 @@ export class StreamPreviewService {
     }
     await this.native().createStreamPreview(id);
     if (context.sender.isDestroyed()) {
-      await this.native().releaseStreamPreview(id).catch(() => {});
+      await this.native()
+        .releaseStreamPreview(id)
+        .catch(() => {});
       throw new Error('Renderer changed during preview bind');
     }
     const pageFrame = context.frame ?? context.sender.mainFrame;
     if (pageFrame.detached || pageFrame !== context.sender.mainFrame) {
-      await this.native().releaseStreamPreview(id).catch(() => {});
+      await this.native()
+        .releaseStreamPreview(id)
+        .catch(() => {});
       throw new Error('Renderer changed during preview bind');
     }
     const binding: Binding = {
@@ -70,10 +79,22 @@ export class StreamPreviewService {
       dispose: () => {},
     };
     const dispose = () => this.retire(id, binding);
-    const navigate = (_event: Electron.Event, _url: string, _httpCode: number, _httpStatus: string,
-      isMainFrame: boolean, frameProcessId: number, frameRoutingId: number): void => {
-      if (isMainFrame && (frameProcessId !== binding.processId || frameRoutingId !== binding.routingId ||
-        !this.sameDocument(binding))) dispose();
+    const navigate = (
+      _event: Electron.Event,
+      _url: string,
+      _httpCode: number,
+      _httpStatus: string,
+      isMainFrame: boolean,
+      frameProcessId: number,
+      frameRoutingId: number,
+    ): void => {
+      if (
+        isMainFrame &&
+        (frameProcessId !== binding.processId ||
+          frameRoutingId !== binding.routingId ||
+          !this.sameDocument(binding))
+      )
+        dispose();
     };
     context.sender.once('destroyed', dispose);
     context.sender.on('render-process-gone', dispose);
@@ -101,22 +122,33 @@ export class StreamPreviewService {
     // C++ 侧 releaseFrame 幂等：即使绑定已回收也允许兜底归还，避免与回收竞态。
     if (!this.known.has(id)) throw new Error('Unknown stream preview: ' + id);
     const owner = this.bindings.get(id);
-    if (context && owner && (owner.target !== context.sender || owner.frame !== context.frame || !this.sameDocument(owner)))
+    if (
+      context &&
+      owner &&
+      (owner.target !== context.sender ||
+        owner.frame !== context.frame ||
+        !this.sameDocument(owner))
+    )
       throw new Error('Stream preview consumer required');
     await this.native().releaseVideoFrame(id, token);
   }
 
-  drainDocument(target: WebContents, options: { timeoutMs?: number } = {}): Promise<void> | undefined {
+  drainDocument(
+    target: WebContents,
+    options: { timeoutMs?: number } = {},
+  ): Promise<void> | undefined {
     const existing = this.drains.get(target);
     if (existing) return existing;
-    const affected = [...this.bindings.values()].filter(binding => binding.target === target);
+    const affected = [...this.bindings.values()].filter((binding) => binding.target === target);
     if (!affected.length) return undefined;
     const timeoutMs = options.timeoutMs ?? 12000;
-    if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 15000) throw new Error('Invalid preview drain timeout');
+    if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 15000)
+      throw new Error('Invalid preview drain timeout');
     // 导航期间旧文档不再接收新帧；等已转发帧全部归还（allReferencesReleased）后回收绑定。
     for (const binding of affected) binding.quiescing = true;
     const verify = () => {
-      if (this.stopped || target.isDestroyed() || target.isCrashed()) throw new Error('Preview document unavailable during drain');
+      if (this.stopped || target.isDestroyed() || target.isCrashed())
+        throw new Error('Preview document unavailable during drain');
       for (const binding of affected) {
         if (!this.sameDocument(binding)) throw new Error('Preview document changed during drain');
       }
@@ -125,23 +157,27 @@ export class StreamPreviewService {
       verify();
       const failures: unknown[] = [];
       for (const binding of affected) {
-        try { this.retire(binding.id, binding); } catch (error) { failures.push(error); }
+        try {
+          this.retire(binding.id, binding);
+        } catch (error) {
+          failures.push(error);
+        }
       }
       if (failures.length) throw new AggregateError(failures, 'Preview drain unsubscribe failed');
     };
-    if (affected.every(binding => binding.outstanding.size === 0)) {
+    if (affected.every((binding) => binding.outstanding.size === 0)) {
       finish();
       return;
     }
     let timer: NodeJS.Timeout | undefined;
     let completing = false;
-    let wake = () => { };
+    let wake = () => {};
     const pending = new Promise<void>((resolve, reject) => {
       wake = () => {
         if (completing) return;
         try {
           verify();
-          if (affected.every(binding => binding.outstanding.size === 0)) {
+          if (affected.every((binding) => binding.outstanding.size === 0)) {
             completing = true;
             finish();
             resolve();
@@ -169,27 +205,40 @@ export class StreamPreviewService {
     this.subscription = null;
     const failures: unknown[] = [];
     for (const [id, binding] of [...this.bindings]) {
-      try { this.retire(id, binding); } catch (error) { failures.push(error); }
+      try {
+        this.retire(id, binding);
+      } catch (error) {
+        failures.push(error);
+      }
     }
     if (failures.length) throw new AggregateError(failures, 'Stream preview cleanup failed');
   }
 
   private ensureSubscription(): void {
     if (this.subscription) return;
-    this.subscription = this.native().subscribeFrame(frame => {
-      try { this.dispatch(frame); }
-      catch (error) { logger.error('video frame dispatch failed:', error); }
+    this.subscription = this.native().subscribeFrame((frame) => {
+      try {
+        this.dispatch(frame);
+      } catch (error) {
+        logger.error('video frame dispatch failed:', error);
+      }
     });
   }
 
   private dispatch(frame: FrameEvent): void {
     const binding = this.bindings.get(frame.id);
     if (!binding || binding.retired || binding.quiescing || !frame.handle) {
-      void this.native().releaseVideoFrame(frame.id, frame.token).catch(error => logger.error('video frame release failed:', error));
+      void this.native()
+        .releaseVideoFrame(frame.id, frame.token)
+        .catch((error) => logger.error('video frame release failed:', error));
       return;
     }
     const meta: StreamPreviewFrameMeta = {
-      id: frame.id, token: frame.token, width: frame.width, height: frame.height, timestampUs: frame.timestampUs,
+      id: frame.id,
+      token: frame.token,
+      width: frame.width,
+      height: frame.height,
+      timestampUs: frame.timestampUs,
     };
     let imported: SharedTextureImported | null = null;
     try {
@@ -203,26 +252,39 @@ export class StreamPreviewService {
         allReferencesReleased: () => this.resolved(binding, frame.token),
       });
       binding.outstanding.add(frame.token);
-      void sharedTexture.sendSharedTexture({ frame: binding.frame, importedSharedTexture: imported }, meta)
-        .catch(error => {
+      void sharedTexture
+        .sendSharedTexture({ frame: binding.frame, importedSharedTexture: imported }, meta)
+        .catch((error) => {
           binding.outstanding.delete(frame.token);
           logger.error('video texture transfer failed:', error);
-          void this.native().releaseVideoFrame(frame.id, frame.token).catch(releaseError => logger.error('video frame release failed:', releaseError));
+          void this.native()
+            .releaseVideoFrame(frame.id, frame.token)
+            .catch((releaseError) => logger.error('video frame release failed:', releaseError));
         })
         .finally(() => {
-          try { imported?.release(); } catch { /* 已释放 */ }
+          try {
+            imported?.release();
+          } catch {
+            /* 已释放 */
+          }
         });
     } catch (error) {
       binding.outstanding.delete(frame.token);
       logger.error('video texture import failed:', error);
-      void this.native().releaseVideoFrame(frame.id, frame.token).catch(releaseError => logger.error('video frame release failed:', releaseError));
+      void this.native()
+        .releaseVideoFrame(frame.id, frame.token)
+        .catch((releaseError) => logger.error('video frame release failed:', releaseError));
     }
   }
 
   private resolved(binding: Binding, token: bigint): void {
     binding.outstanding.delete(token);
     for (const wake of [...binding.drains]) {
-      try { wake(); } catch { /* drain 失败由调用方处理 */ }
+      try {
+        wake();
+      } catch {
+        /* drain 失败由调用方处理 */
+      }
     }
   }
 
@@ -230,22 +292,38 @@ export class StreamPreviewService {
     if (this.bindings.get(id) !== binding) return;
     this.bindings.delete(id);
     binding.retired = true;
-    try { binding.dispose(); } catch (error) { logger.error('stream preview binding cleanup failed:', error); }
+    try {
+      binding.dispose();
+    } catch (error) {
+      logger.error('stream preview binding cleanup failed:', error);
+    }
     for (const token of [...binding.outstanding]) {
-      void this.native().releaseVideoFrame(id, token).catch(error => logger.error('video frame release failed:', error));
+      void this.native()
+        .releaseVideoFrame(id, token)
+        .catch((error) => logger.error('video frame release failed:', error));
     }
     binding.outstanding.clear();
     for (const wake of [...binding.drains]) {
-      try { wake(); } catch { /* drain 失败由调用方处理 */ }
+      try {
+        wake();
+      } catch {
+        /* drain 失败由调用方处理 */
+      }
     }
-    void this.native().releaseStreamPreview(id).catch(error => logger.error('stream preview release failed:', error));
+    void this.native()
+      .releaseStreamPreview(id)
+      .catch((error) => logger.error('stream preview release failed:', error));
   }
 
   private sameDocument(binding: Binding): boolean {
     try {
-      return !binding.target.isDestroyed() && binding.target.mainFrame === binding.frame &&
-        binding.frame.frameToken === binding.frameToken && binding.frame.processId === binding.processId &&
-        binding.frame.routingId === binding.routingId;
+      return (
+        !binding.target.isDestroyed() &&
+        binding.target.mainFrame === binding.frame &&
+        binding.frame.frameToken === binding.frameToken &&
+        binding.frame.processId === binding.processId &&
+        binding.frame.routingId === binding.routingId
+      );
     } catch {
       return false;
     }

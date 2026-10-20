@@ -117,7 +117,8 @@ bool NativeWindowPrivate::attach(uint64_t parentHandle, bool show)
     }
     m_attached = true;
     ::ShowWindow(m_viewHwnd, show ? SW_SHOWNOACTIVATE : SW_HIDE);
-    if (!applyRect()) return false;
+    if (!applyRect())
+        return false;
     mediaservice::logger().logInfo(kComponent, "view attached to parent " + hex(parentHandle));
     return true;
 }
@@ -176,7 +177,8 @@ bool NativeWindowPrivate::detach()
         return true;
     }
     ::ShowWindow(m_viewHwnd, SW_HIDE);
-    if (::IsWindowVisible(m_viewHwnd)) return false;
+    if (::IsWindowVisible(m_viewHwnd))
+        return false;
     m_attached = false;
     mediaservice::logger().logInfo(kComponent, "view detached");
     return true;
@@ -193,7 +195,8 @@ bool NativeWindowPrivate::destroyView()
     {
         if (::IsWindow(m_viewHwnd))
         {
-            if (!::DestroyWindow(m_viewHwnd)) return false;
+            if (!::DestroyWindow(m_viewHwnd))
+                return false;
         }
         m_viewHwnd = nullptr;
     }

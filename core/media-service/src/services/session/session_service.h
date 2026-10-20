@@ -11,7 +11,10 @@ class SessionService : public ServiceBase<SessionService>
 public:
     SessionService(IpcServer* server, EventLoop* eventLoop);
 
-    const char* serviceId() const override { return "SessionService"; }
+    const char* serviceId() const override
+    {
+        return "SessionService";
+    }
 
     // 统一工厂（services::registerAll 经 Service::Factory 调用）。
     static std::shared_ptr<Service> createService(IpcServer* server, EventLoop* eventLoop);

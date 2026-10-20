@@ -21,8 +21,8 @@ template <typename T>
 struct Root;
 
 // 每个 root 表的特化形态完全一致，用文件内宏展开：
-// 新增/删除 root 表只需增删一行 BIGO_SCHEMA_ROOT_TABLE(<表名>)。
-#define BIGO_SCHEMA_ROOT_TABLE(ROOT)                     \
+// 新增/删除 root 表只需增删一行 FOLIO_SCHEMA_ROOT_TABLE(<表名>)。
+#define FOLIO_SCHEMA_ROOT_TABLE(ROOT)                     \
     template <>                                          \
     struct Root<ROOT>                                    \
     {                                                    \
@@ -38,34 +38,34 @@ struct Root;
         }                                                \
     };
 
-BIGO_SCHEMA_ROOT_TABLE(CreateArgs)
-BIGO_SCHEMA_ROOT_TABLE(SetRectArgs)
-BIGO_SCHEMA_ROOT_TABLE(SetVisibleArgs)
-BIGO_SCHEMA_ROOT_TABLE(ReleaseArgs)
-BIGO_SCHEMA_ROOT_TABLE(ReleaseAllArgs)
-BIGO_SCHEMA_ROOT_TABLE(RefreshArgs)
-BIGO_SCHEMA_ROOT_TABLE(CreateResult)
-BIGO_SCHEMA_ROOT_TABLE(SetRectResult)
-BIGO_SCHEMA_ROOT_TABLE(SetVisibleResult)
-BIGO_SCHEMA_ROOT_TABLE(ReleaseResult)
-BIGO_SCHEMA_ROOT_TABLE(ReleaseAllResult)
-BIGO_SCHEMA_ROOT_TABLE(RefreshResult)
-BIGO_SCHEMA_ROOT_TABLE(InvokeReq)
-BIGO_SCHEMA_ROOT_TABLE(InvokeRsp)
-BIGO_SCHEMA_ROOT_TABLE(ServiceEvent)
-BIGO_SCHEMA_ROOT_TABLE(HelloArgs)
-BIGO_SCHEMA_ROOT_TABLE(ShutdownArgs)
-BIGO_SCHEMA_ROOT_TABLE(HelloResult)
-BIGO_SCHEMA_ROOT_TABLE(ShutdownResult)
-BIGO_SCHEMA_ROOT_TABLE(CreateStreamPreviewArgs)
-BIGO_SCHEMA_ROOT_TABLE(ReleaseStreamPreviewArgs)
-BIGO_SCHEMA_ROOT_TABLE(ReleaseVideoFrameArgs)
-BIGO_SCHEMA_ROOT_TABLE(FrameEvent)
-BIGO_SCHEMA_ROOT_TABLE(CreateStreamPreviewResult)
-BIGO_SCHEMA_ROOT_TABLE(ReleaseStreamPreviewResult)
-BIGO_SCHEMA_ROOT_TABLE(ReleaseVideoFrameResult)
+FOLIO_SCHEMA_ROOT_TABLE(CreateArgs)
+FOLIO_SCHEMA_ROOT_TABLE(SetRectArgs)
+FOLIO_SCHEMA_ROOT_TABLE(SetVisibleArgs)
+FOLIO_SCHEMA_ROOT_TABLE(ReleaseArgs)
+FOLIO_SCHEMA_ROOT_TABLE(ReleaseAllArgs)
+FOLIO_SCHEMA_ROOT_TABLE(RefreshArgs)
+FOLIO_SCHEMA_ROOT_TABLE(CreateResult)
+FOLIO_SCHEMA_ROOT_TABLE(SetRectResult)
+FOLIO_SCHEMA_ROOT_TABLE(SetVisibleResult)
+FOLIO_SCHEMA_ROOT_TABLE(ReleaseResult)
+FOLIO_SCHEMA_ROOT_TABLE(ReleaseAllResult)
+FOLIO_SCHEMA_ROOT_TABLE(RefreshResult)
+FOLIO_SCHEMA_ROOT_TABLE(InvokeReq)
+FOLIO_SCHEMA_ROOT_TABLE(InvokeRsp)
+FOLIO_SCHEMA_ROOT_TABLE(ServiceEvent)
+FOLIO_SCHEMA_ROOT_TABLE(HelloArgs)
+FOLIO_SCHEMA_ROOT_TABLE(ShutdownArgs)
+FOLIO_SCHEMA_ROOT_TABLE(HelloResult)
+FOLIO_SCHEMA_ROOT_TABLE(ShutdownResult)
+FOLIO_SCHEMA_ROOT_TABLE(CreateStreamPreviewArgs)
+FOLIO_SCHEMA_ROOT_TABLE(ReleaseStreamPreviewArgs)
+FOLIO_SCHEMA_ROOT_TABLE(ReleaseVideoFrameArgs)
+FOLIO_SCHEMA_ROOT_TABLE(FrameEvent)
+FOLIO_SCHEMA_ROOT_TABLE(CreateStreamPreviewResult)
+FOLIO_SCHEMA_ROOT_TABLE(ReleaseStreamPreviewResult)
+FOLIO_SCHEMA_ROOT_TABLE(ReleaseVideoFrameResult)
 
-#undef BIGO_SCHEMA_ROOT_TABLE
+#undef FOLIO_SCHEMA_ROOT_TABLE
 
 } // namespace traits
 } // namespace services

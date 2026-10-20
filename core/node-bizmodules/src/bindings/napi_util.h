@@ -22,4 +22,4 @@ napi_value promise(napi_env env, napi_value value, bool reject = false);
 napi_value rejected(napi_env env, const std::string& message);
 napi_value rejectCurrent(napi_env env, const std::exception& error);
 void keepOwner(napi_env env, napi_value value, napi_value owner);
-}
+} // namespace node_bizmodules

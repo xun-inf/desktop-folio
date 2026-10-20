@@ -19,8 +19,7 @@ const char kComponent[] = "app";
 MediaServiceApplication* MediaServiceApplication::s_instance = nullptr;
 
 MediaServiceApplication::MediaServiceApplication(int argc, char** argv)
-    : m_config(argc, argv)
-    , m_ipcServer([this] { m_eventLoop.requestQuit(); })
+    : m_config(argc, argv), m_ipcServer([this] { m_eventLoop.requestQuit(); })
 {
     mediaservice::logger().setLogFile(m_config.logPath());
     MediaServiceApplication::s_instance = this;

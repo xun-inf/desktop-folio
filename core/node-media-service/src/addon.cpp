@@ -145,4 +145,3 @@ NAPI_MODULE_INIT()
     }
     return exports;
 }
-

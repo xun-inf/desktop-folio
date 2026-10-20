@@ -10,10 +10,19 @@ FARPROC resolveHostApi(const char* name)
 void validateHostApi()
 {
     const char* required[] = {
-        "napi_get_cb_info", "napi_create_function", "napi_create_promise", "napi_resolve_deferred",
-        "napi_reject_deferred", "napi_create_threadsafe_function", "napi_call_threadsafe_function",
-        "napi_get_value_uint32", "napi_get_value_int32", "napi_get_value_double", "napi_get_value_bool",
-        "napi_get_value_bigint_uint64", "napi_get_value_bigint_int64",
+        "napi_get_cb_info",
+        "napi_create_function",
+        "napi_create_promise",
+        "napi_resolve_deferred",
+        "napi_reject_deferred",
+        "napi_create_threadsafe_function",
+        "napi_call_threadsafe_function",
+        "napi_get_value_uint32",
+        "napi_get_value_int32",
+        "napi_get_value_double",
+        "napi_get_value_bool",
+        "napi_get_value_bigint_uint64",
+        "napi_get_value_bigint_int64",
         "napi_create_buffer_copy",
         "napi_create_bigint_uint64",
     };
@@ -272,4 +281,3 @@ napi_value stringArray(napi_env env, const flatbuffers::Vector<flatbuffers::Offs
     return array;
 }
 } // namespace node_media_service
-

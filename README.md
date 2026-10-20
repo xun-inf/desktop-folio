@@ -1,4 +1,4 @@
-# bigostreamer-electron 架构文档
+# Folio 架构文档
 
 详细架构与后续业务重构指南已统一到：
 

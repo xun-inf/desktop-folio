@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isLanguageSnapshot, isSupportedLanguage, type LanguageSnapshot, type SupportedLanguage } from './contract.js';
+import {
+  isLanguageSnapshot,
+  isSupportedLanguage,
+  type LanguageSnapshot,
+  type SupportedLanguage,
+} from './contract.js';
 
 // 最小配置存储：只持久化语言；登录/账号等其他配置本阶段不恢复。
 export class ConfigurationStore {
@@ -34,7 +39,11 @@ export class ConfigurationStore {
     this.revision = snapshot.revision;
     this.persist(snapshot);
     for (const listener of [...this.listeners]) {
-      try { listener(snapshot); } catch { /* 广播失败不影响存储。 */ }
+      try {
+        listener(snapshot);
+      } catch {
+        /* 广播失败不影响存储。 */
+      }
     }
     return snapshot;
   }

@@ -107,8 +107,9 @@ public:
             return;
         }
         const D3D_FEATURE_LEVEL levels[] = {D3D_FEATURE_LEVEL_11_0};
-        check(::D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-                                 levels, 1, D3D11_SDK_VERSION, &m_device, nullptr, &m_context), "D3D11CreateDevice");
+        check(::D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT, levels,
+                                  1, D3D11_SDK_VERSION, &m_device, nullptr, &m_context),
+              "D3D11CreateDevice");
         ComPtr<ID3DBlob> vs;
         ComPtr<ID3DBlob> ps;
         check(::D3DCompile(kShader, sizeof(kShader) - 1, nullptr, nullptr, nullptr, "vs", "vs_5_0", 0, 0, &vs, nullptr),
@@ -165,8 +166,9 @@ public:
         check(m_device->CreateRenderTargetView(slot.texture.Get(), nullptr, &slot.target), "CreateRenderTargetView");
         ComPtr<IDXGIResource1> resource;
         check(slot.texture.As(&resource), "IDXGIResource1");
-        check(resource->CreateSharedHandle(nullptr, DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE,
-                                           nullptr, &slot.handle), "CreateSharedHandle");
+        check(resource->CreateSharedHandle(nullptr, DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE, nullptr,
+                                           &slot.handle),
+              "CreateSharedHandle");
         slot.width = width;
         slot.height = height;
     }
@@ -176,7 +178,7 @@ public:
         if (frame.format == VideoPixelFormat::BGRA)
         {
             m_context->UpdateSubresource(slot.texture.Get(), 0, nullptr, frame.planes[0].data,
-                                       static_cast<UINT>(frame.planes[0].stride), 0);
+                                         static_cast<UINT>(frame.planes[0].stride), 0);
             return;
         }
         if (m_inputFormat != frame.format || m_inputWidth != frame.width || m_inputHeight != frame.height)
@@ -204,7 +206,8 @@ public:
             if (!m_planes[i])
             {
                 check(m_device->CreateTexture2D(&desc, nullptr, &m_planes[i]), "CreateTexture2D(plane)");
-                check(m_device->CreateShaderResourceView(m_planes[i].Get(), nullptr, &m_views[i]), "CreateShaderResourceView");
+                check(m_device->CreateShaderResourceView(m_planes[i].Get(), nullptr, &m_views[i]),
+                      "CreateShaderResourceView");
             }
             D3D11_MAPPED_SUBRESOURCE mapped {};
             check(m_context->Map(m_planes[i].Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped), "Map(plane)");

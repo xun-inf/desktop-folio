@@ -1,4 +1,4 @@
-# bigostreamer-electron 技术架构与业务迭代指南
+# Folio 技术架构与业务迭代指南
 
 > 源码基线：2026-10-15，整理时 HEAD 为 `ac6321ca2`。本文记录当前实现，供后续业务重构、能力扩展和变更评审使用；代码继续演进时应同步维护。
 >
@@ -31,8 +31,8 @@ IPC 解决进程间的能力暴露、校验与生命周期问题。实际业务�
 
 | 层 | 源码中的版本或约束 | 来源 |
 | --- | --- | --- |
-| 桌面运行时 | Electron `44.7.0` | `electron/package.json` |
-| UI | React / React DOM `19.3.0`，多 HTML 入口 | `electron/package.json`、`vite.config.mjs` |
+| 桌面运行时 | Electron `44.7.0` | `frontend/package.json` |
+| UI | React / React DOM `19.3.0`，多 HTML 入口 | `frontend/package.json`、`vite.config.mjs` |
 | 语言与打包 | TypeScript `7.0.2`、Vite `8.3.4`；TS strict、ES2022 / NodeNext | package、tsconfig |
 | 本地 Node 工具链 | `>=22.12.0`；不代表 Electron 内嵌 Node 的版本 | `engines.node` |
 | 原生构建 | CMake `>=3.25`、C++11、Windows x64 为当前实现路径 | `core/CMakeLists.txt` |
@@ -49,7 +49,7 @@ flowchart TB
   subgraph renderer["产品 Renderer 进程"]
     direction TB
     UI["React：Main / Settings / SecondScreen"]
-    API["window.bigoMain<br/>window.bigoMediaService<br/>window.bigoBizModules"]
+    API["window.folioMain<br/>window.folioMediaService<br/>window.folioBizModules"]
     PRE["隔离 sandbox preload<br/>具名 facade + IpcClient"]
     UI --> API
     API --> PRE
@@ -85,7 +85,7 @@ BrowserView 的实际实现是 `WebContentsView`，具有自己的网页文档�
 
 | 链路 | 传输内容 | 实现入口 | 业务扩展方式 |
 | --- | --- | --- | --- |
-| Renderer ↔ Main | 普通参数、结果、状态与领域事件 | `electron/src/ipc/` | 模块内 `contract.ts` + `ipc.ts`，手写显式绑定 |
+| Renderer ↔ Main | 普通参数、结果、状态与领域事件 | `frontend/src/ipc/` | 模块内 `contract.ts` + `ipc.ts`，手写显式绑定 |
 | Main addon ↔ 媒体进程 | 方法请求、回执、原生事件；含 session / request ID | `Transport`、`IpcServer`、`core/schemas/` | FBS + 生成代理 + 服务端实现 |
 | Main → preload / Renderer | 共享纹理与帧元数据 | Electron `sharedTexture` | 保留纹理专用通路；bind、unbind、归还 token 仍走通用 IPC |
 
@@ -95,7 +95,7 @@ BrowserView 的实际实现是 `WebContentsView`，具有自己的网页文档�
 ## 3. 当前目录结构与职责
 
 ```text
-bigostreamer-electron/
+folio/
 ├─ docs/
 │  └─ technical-architecture.md        # 本文：架构事实与扩展指南
 ├─ FRAMEWORK.md                       # 架构文档入口
@@ -133,7 +133,7 @@ bigostreamer-electron/
 │  │     ├─ bindings/                 # N-API 工具
 │  │     └─ modules/test/             # 当前唯一业务 fixture
 │  └─ utils/                         # 原生通用日志、字符串等
-├─ electron/
+├─ frontend/
 │  ├─ package.json / package-lock.json
 │  ├─ tsconfig.json / tsconfig.app.json
 │  ├─ vite.config.mjs                 # 多入口 React 应用
@@ -226,7 +226,7 @@ flowchart LR
 <a id="electron-ipc"></a>
 ## 5. 通用 Electron IPC
 
-源码：[contract.ts](../electron/src/ipc/contract.ts)、[server.ts](../electron/src/ipc/server.ts)、[client.ts](../electron/src/ipc/client.ts)。
+源码：[contract.ts](../frontend/src/ipc/contract.ts)、[server.ts](../frontend/src/ipc/server.ts)、[client.ts](../frontend/src/ipc/client.ts)。
 
 ### 5.1 当前公开能力与权限
 
@@ -234,15 +234,15 @@ flowchart LR
 
 | Renderer 公开入口 | capability / 方法 | 可调用者 | 事件或订阅 |
 | --- | --- | --- | --- |
-| `bigoMain.configuration` | `configuration.get / setLanguage` | 登记页面 | `onLanguageChanged` |
-| `bigoMain.windows` | `windows.control / ready / getState / showWindow / closeWindow / closeAllWindow` | 登记页面 | `onState` |
-| `bigoMain.browserView` | `browserView.create / load / setRect / release` | Main 页面 | `onEvent`，Main 页面 |
-| `bigoMain.onIpcError` | preload 本地错误观察器，无独立 capability | 获得该 preload 的页面 | IPC 订阅 / 回调失败通知 |
-| `bigoMediaService.media` | `media.getStatus` | 登记页面 | `subscribeStatus` |
+| `folioMain.configuration` | `configuration.get / setLanguage` | 登记页面 | `onLanguageChanged` |
+| `folioMain.windows` | `windows.control / ready / getState / showWindow / closeWindow / closeAllWindow` | 登记页面 | `onState` |
+| `folioMain.browserView` | `browserView.create / load / setRect / release` | Main 页面 | `onEvent`，Main 页面 |
+| `folioMain.onIpcError` | preload 本地错误观察器，无独立 capability | 获得该 preload 的页面 | IPC 订阅 / 回调失败通知 |
+| `folioMediaService.media` | `media.getStatus` | 登记页面 | `subscribeStatus` |
 | 同上 | `media.initialize / stop` | Main 页面 | — |
-| `bigoMediaService.nativeWindowService` | `create / setRect / setVisible / release / releaseAll / refresh` | Main 页面 | — |
-| `bigoMediaService.streamPreviewService` | `bind / unbind / releaseVideoFrame` | 登记页面，含 SecondScreen；服务另查消费者归属 | `subscribe(id, onFrame)` 为帧专用 facade |
-| `bigoBizModules.testModule` | `testModule.echo / publish` | 登记页面 | `subscribe('changed', callback)` |
+| `folioMediaService.nativeWindowService` | `create / setRect / setVisible / release / releaseAll / refresh` | Main 页面 | — |
+| `folioMediaService.streamPreviewService` | `bind / unbind / releaseVideoFrame` | 登记页面，含 SecondScreen；服务另查消费者归属 | `subscribe(id, onFrame)` 为帧专用 facade |
+| `folioBizModules.testModule` | `testModule.echo / publish` | 登记页面 | `subscribe('changed', callback)` |
 
 当前权限模型只有 `'page' | 'main'`。没有角色数组、账号权限系统或细粒度 RBAC。新增敏感业务需要在领域内补充真实业务授权，页面身份不能替代账号身份。
 
@@ -329,7 +329,7 @@ sequenceDiagram
 
 - 配置、媒体状态、窗口状态与 BrowserView 订阅返回 `() => void`。
 - 业务 fixture 返回 `{ dispose(), ready: Promise<void> }`，可明确等待 Main 订阅建立。
-- 函数的自定义属性不能依赖 contextBridge 复制，因此函数型 facade 不以 `dispose.ready` 为公共保证；失败通过 `bigoMain.onIpcError` 和 console 可观察。
+- 函数的自定义属性不能依赖 contextBridge 复制，因此函数型 facade 不以 `dispose.ready` 为公共保证；失败通过 `folioMain.onIpcError` 和 console 可观察。
 - `windows.ready()` 是 void facade，内部捕获 IPC Promise 失败；它与业务订阅的 `ready` Promise 含义不同。
 
 ### 5.5 文档导航状态
@@ -351,7 +351,7 @@ Paused 期间暂停方法调用、新订阅与事件投递，保留旧订阅；�
 <a id="lifecycle"></a>
 ## 6. 应用启动、关闭与失败回收
 
-源码：[main.ts](../electron/src/main/main.ts)、[bootstrap.ts](../electron/src/main/bootstrap.ts)、[registerIpc.ts](../electron/src/main/registerIpc.ts)。
+源码：[main.ts](../frontend/src/main/main.ts)、[bootstrap.ts](../frontend/src/main/bootstrap.ts)、[registerIpc.ts](../frontend/src/main/registerIpc.ts)。
 
 ```mermaid
 sequenceDiagram
@@ -443,7 +443,7 @@ BrowserView URL 限于 http、https 或 `data:text/html`。是否可嵌入某个
 
 ## 8. 配置与跨窗口同步
 
-源码：[configuration 目录](../electron/src/main/infrastructure/configuration/)。
+源码：[configuration 目录](../frontend/src/main/infrastructure/configuration/)。
 
 ```mermaid
 sequenceDiagram
@@ -473,11 +473,11 @@ sequenceDiagram
 <a id="business"></a>
 ## 9. node-bizmodules 业务模块框架
 
-源码：[原生 runtime](../core/node-bizmodules/src/runtime/)、[TestModule](../core/node-bizmodules/src/modules/test/)、[Main 适配层](../electron/src/main/bizModules/)。
+源码：[原生 runtime](../core/node-bizmodules/src/runtime/)、[TestModule](../core/node-bizmodules/src/modules/test/)、[Main 适配层](../frontend/src/main/bizModules/)。
 
 ```mermaid
 flowchart TB
-  API["bigoBizModules.testModule"]
+  API["folioBizModules.testModule"]
   IPC["testModuleContract / registerBizIpc"]
   CONTAINER["BizModulesContainer：ready 门禁、初始化、订阅清理"]
   ADAPTER["moduleRegistry.ts：own data method 验证与显式适配"]
@@ -665,12 +665,12 @@ python core/schemas/generate.py
 python core/schemas/generate.py --check
 ```
 
-生成器当前硬编码读取 `build/schema/_deps/bigostreamer_flatc-src/flatc.exe`，该路径必须先有匹配版本工具；它没有通用 PATH 查找或 Python 命令行覆盖参数。`FlatBuffers.cmake` 的覆盖变量属于 CMake 层，不能直接当作 Python 生成器的参数。`--check` 当前实现是先生成、再比较已有文件字节，**不是只读检查**；执行后必须检查 diff，不要用它证明没有写文件。
+生成器当前硬编码读取 `build/schema/_deps/folio_flatc-src/flatc.exe`，该路径必须先有匹配版本工具；它没有通用 PATH 查找或 Python 命令行覆盖参数。`FlatBuffers.cmake` 的覆盖变量属于 CMake 层，不能直接当作 Python 生成器的参数。`--check` 当前实现是先生成、再比较已有文件字节，**不是只读检查**；执行后必须检查 diff，不要用它证明没有写文件。
 
 当前 CMake 接线限制：
 
-- `core/CMakeLists.txt` 仅在 `BIGOSTREAMER_SCHEMA_ONLY=ON` 分支 include `Schemas.cmake`；普通构建使用已入库生成物，不能假定 `scripts/build.py` 会自动重新生成。
-- `Schemas.cmake` 定义 `generate-schemas` 目标，但依赖列表里仍有 `__BSSD__/service.fbs` 字面路径。该接线需要修复与验证后才能作为标准自动生成入口；本文不将它列为已可用流程。
+- `core/CMakeLists.txt` 仅在 `FOLIO_SCHEMA_ONLY=ON` 分支 include `Schemas.cmake`；普通构建使用已入库生成物，不能假定 `scripts/build.py` 会自动重新生成。
+- `Schemas.cmake` 定义 `generate-schemas` 目标，依赖 `core/schemas/` 下的三个 schema；执行前仍须在上述固定路径准备匹配版本的 `flatc.exe`。
 - 新增媒体 schema 后，除运行 Python 生成器，还须检查媒体与 addon CMake 源文件/依赖列表；现有文件列表并非完整自动发现。
 
 这些是当前源码限制，本轮文档整理不改变生成器或构建代码。后续若修复，应同时更新本节和相关验收记录。
@@ -731,7 +731,7 @@ sequenceDiagram
 
 ### 13.1 推荐落点
 
-一般业务可新增 `electron/src/main/<businessName>/`；基础设施能力沿 `infrastructure/<name>/`。先保持单业务目录内聚，只有实现规模需要时再拆子目录，不要求每个能力都创建空的 store、adapter 或 native 层。
+一般业务可新增 `frontend/src/main/<businessName>/`；基础设施能力沿 `infrastructure/<name>/`。先保持单业务目录内聚，只有实现规模需要时再拆子目录，不要求每个能力都创建空的 store、adapter 或 native 层。
 
 ```text
 main/example/                 # 示例，尚不存在
@@ -771,7 +771,7 @@ export function registerExampleIpc(server: IpcServer, service: ExampleService): 
 2. 在所属目录写浏览器安全 `contract.ts`。描述符只声明允许公开的能力，方法默认 page，Main 页面专属能力显式设 `'main'`。
 3. `service.ts` 实现业务规则；`ipc.ts` 绑定明确的方法与事件源，需要身份时传入可信 Caller。
 4. `bootstrap.ts` 创建有生命周期的服务并安排清理；`registerIpc.ts` 静态注册。简单无状态对象不必硬加全局容器。
-5. preload `client.bind(exampleContract)` 后显式放入合适的公共 facade。通用业务一般归 `bigoBizModules`，配置/窗口等应用基础能力归 `bigoMain`；不要塞入媒体 facade。
+5. preload `client.bind(exampleContract)` 后显式放入合适的公共 facade。通用业务一般归 `folioBizModules`，配置/窗口等应用基础能力归 `folioMain`；不要塞入媒体 facade。
 6. 事件若需握手完成保证，公开 `{ dispose, ready }` 对象；遵守现有错误观察与页面关闭约定。
 7. Renderer 从全局 API 调用，在 hook/effect 中取消监听；`app/types.d.ts` 随实际 preload facade 推导。
 8. 构建并验证成功、非法输入、权限拒绝、订阅取消、导航/关闭清理。通常无需修改 `ipc/` 核心。
@@ -852,7 +852,7 @@ flowchart TB
 <a id="build"></a>
 ## 17. 构建、开发、发布与文件边界
 
-源码：[scripts/build.py](../scripts/build.py)、[Vite preload 配置](../electron/vite.preload.config.mjs)、[开发入口](../electron/scripts/dev.mjs)。
+源码：[scripts/build.py](../scripts/build.py)、[Vite preload 配置](../frontend/vite.preload.config.mjs)、[开发入口](../frontend/scripts/dev.mjs)。
 
 ```mermaid
 flowchart TB
@@ -872,7 +872,7 @@ flowchart TB
 
 ```powershell
 python scripts/build.py --config Debug
-.\build\bin\Debug\bigostreamer.exe .\build\bin\Debug\resources\app
+.\build\bin\Debug\folio.exe .\build\bin\Debug\resources\app
 ```
 
 React 开发使用 Vite dev server，仍需先准备匹配的原生产物；开发启动脚本不会代替 CMake 构建。从项目根开始，给 addon 所在媒体目录传绝对路径，避免 `createRequire` 的相对路径解析与工作目录不同：
@@ -880,7 +880,7 @@ React 开发使用 Vite dev server，仍需先准备匹配的原生产物；开�
 ```powershell
 $mediaExe = (Resolve-Path .\build\bin\Debug\media-service.exe).Path
 $configDir = (Resolve-Path .\config).Path
-Push-Location .\electron
+Push-Location .\frontend
 try {
   npm run dev -- "--media-service-exe=$mediaExe" "--config-dir=$configDir"
 } finally {
@@ -894,7 +894,7 @@ try {
 
 ```text
 build/bin/Debug/
-  bigostreamer.exe                    # 更名和品牌化的 Electron 运行时
+  folio.exe                           # 更名和品牌化的 Electron 运行时
   media-service.exe
   node-media-service.node
   node-bizmodules.node
@@ -989,17 +989,17 @@ python build/cache/verification/verify_bizmodules.py --config Debug
 
 | 架构事实 | 权威源码 |
 | --- | --- |
-| 应用装配与失败回收 | [bootstrap.ts](../electron/src/main/bootstrap.ts)、[registerIpc.ts](../electron/src/main/registerIpc.ts) |
-| IPC 描述符、授权与文档生命周期 | [contract.ts](../electron/src/ipc/contract.ts)、[server.ts](../electron/src/ipc/server.ts)、[client.ts](../electron/src/ipc/client.ts) |
-| 公共 API 与 Renderer 类型 | [preload.ts](../electron/src/preload/preload.ts)、[types.d.ts](../electron/src/app/types.d.ts) |
-| 能力契约 | [configuration](../electron/src/main/infrastructure/configuration/contract.ts)、[media](../electron/src/main/mediaService/contract.ts)、[biz](../electron/src/main/bizModules/contract.ts)、[window](../electron/src/main/window/contract.ts) |
-| 窗口与网页嵌入 | [popupWindow.ts](../electron/src/main/window/popupWindow.ts)、[browserView.ts](../electron/src/main/window/browserView.ts) |
-| 帧所有权与绘制 | [Main StreamPreviewService](../electron/src/main/mediaService/streamPreviewService.ts)、[Renderer Controller](../electron/src/app/components/StreamPreview/streamPreview.ts) |
+| 应用装配与失败回收 | [bootstrap.ts](../frontend/src/main/bootstrap.ts)、[registerIpc.ts](../frontend/src/main/registerIpc.ts) |
+| IPC 描述符、授权与文档生命周期 | [contract.ts](../frontend/src/ipc/contract.ts)、[server.ts](../frontend/src/ipc/server.ts)、[client.ts](../frontend/src/ipc/client.ts) |
+| 公共 API 与 Renderer 类型 | [preload.ts](../frontend/src/preload/preload.ts)、[types.d.ts](../frontend/src/app/types.d.ts) |
+| 能力契约 | [configuration](../frontend/src/main/infrastructure/configuration/contract.ts)、[media](../frontend/src/main/mediaService/contract.ts)、[biz](../frontend/src/main/bizModules/contract.ts)、[window](../frontend/src/main/window/contract.ts) |
+| 窗口与网页嵌入 | [popupWindow.ts](../frontend/src/main/window/popupWindow.ts)、[browserView.ts](../frontend/src/main/window/browserView.ts) |
+| 帧所有权与绘制 | [Main StreamPreviewService](../frontend/src/main/mediaService/streamPreviewService.ts)、[Renderer Controller](../frontend/src/app/components/StreamPreview/streamPreview.ts) |
 | C++ 业务生命周期与工厂 | [module_host.cpp](../core/node-bizmodules/src/runtime/module_host.cpp)、[module_registry.cpp](../core/node-bizmodules/src/runtime/module_registry.cpp)、[module.cpp](../core/node-bizmodules/src/runtime/module.cpp) |
 | 媒体宿主与原生传输 | [service_host.cpp](../core/node-media-service/src/runtime/service_host.cpp)、[transport.cpp](../core/node-media-service/src/runtime/transport.cpp) |
 | 媒体进程与服务注册 | [application.cpp](../core/media-service/src/application.cpp)、[register.cpp](../core/media-service/src/services/register.cpp)、[ServiceBase](../core/media-service/include/service.h) |
 | 协议与生成 | [service.fbs](../core/schemas/service.fbs)、[generate.py](../core/schemas/generate.py)、[Schemas.cmake](../core/cmake/Schemas.cmake) |
-| 构建与发布布局 | [build.py](../scripts/build.py)、[core CMake](../core/CMakeLists.txt)、[package.json](../electron/package.json) |
+| 构建与发布布局 | [build.py](../scripts/build.py)、[core CMake](../core/CMakeLists.txt)、[package.json](../frontend/package.json) |
 
 文档维护要求：
 

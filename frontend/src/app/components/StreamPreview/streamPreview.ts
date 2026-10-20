@@ -13,18 +13,28 @@ export class StreamPreviewController {
   private texture: WebGLTexture | null = null;
   private disposal: Promise<void> | null = null;
 
-  private constructor(private readonly canvas: HTMLCanvasElement,
-    private readonly onError: (error: unknown) => void) {
-    const context = canvas.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false });
+  private constructor(
+    private readonly canvas: HTMLCanvasElement,
+    private readonly onError: (error: unknown) => void,
+  ) {
+    const context = canvas.getContext('webgl', {
+      alpha: false,
+      antialias: false,
+      depth: false,
+      stencil: false,
+    });
     if (!context) throw new Error('WebGL unavailable');
     this.context = context;
     this.initialize();
     canvas.addEventListener('webglcontextlost', this.onContextLost);
   }
 
-  static async attach(canvas: HTMLCanvasElement, id: number,
+  static async attach(
+    canvas: HTMLCanvasElement,
+    id: number,
     subscribe: StreamPreviewSubscribe,
-    onError: (error: unknown) => void = console.error): Promise<StreamPreviewController> {
+    onError: (error: unknown) => void = console.error,
+  ): Promise<StreamPreviewController> {
     const presenter = new StreamPreviewController(canvas, onError);
     try {
       presenter.unsubscribe = await subscribe(id, (frame, meta) => presenter.offer(frame, meta));
@@ -67,18 +77,25 @@ export class StreamPreviewController {
       this.program = gl.createProgram();
       this.vertices = gl.createBuffer();
       this.texture = gl.createTexture();
-      if (!this.program || !this.vertices || !this.texture) throw new Error('WebGL resource allocation failed');
+      if (!this.program || !this.vertices || !this.texture)
+        throw new Error('WebGL resource allocation failed');
       const sources: Array<[number, string]> = [
-        [gl.VERTEX_SHADER, `attribute vec2 position;
+        [
+          gl.VERTEX_SHADER,
+          `attribute vec2 position;
           varying vec2 uv;
           void main() {
             gl_Position = vec4(position, 0.0, 1.0);
             uv = vec2((position.x + 1.0) * 0.5, (1.0 - position.y) * 0.5);
-          }`],
-        [gl.FRAGMENT_SHADER, `precision mediump float;
+          }`,
+        ],
+        [
+          gl.FRAGMENT_SHADER,
+          `precision mediump float;
           varying vec2 uv;
           uniform sampler2D frameTexture;
-          void main() { gl_FragColor = texture2D(frameTexture, uv); }`],
+          void main() { gl_FragColor = texture2D(frameTexture, uv); }`,
+        ],
       ];
       for (const [type, source] of sources) {
         const shader = gl.createShader(type);
@@ -86,14 +103,20 @@ export class StreamPreviewController {
         shaders.push(shader);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader) || 'WebGL shader compilation failed');
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+          throw new Error(gl.getShaderInfoLog(shader) || 'WebGL shader compilation failed');
         gl.attachShader(this.program, shader);
       }
       gl.linkProgram(this.program);
-      if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(this.program) || 'WebGL program link failed');
+      if (!gl.getProgramParameter(this.program, gl.LINK_STATUS))
+        throw new Error(gl.getProgramInfoLog(this.program) || 'WebGL program link failed');
       gl.useProgram(this.program);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.vertices);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+        gl.STATIC_DRAW,
+      );
       const position = gl.getAttribLocation(this.program, 'position');
       gl.enableVertexAttribArray(position);
       gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
@@ -128,7 +151,9 @@ export class StreamPreviewController {
     this.program = null;
   }
 
-  private readonly onPageHide = (): void => { void this.dispose().catch(() => {}); };
+  private readonly onPageHide = (): void => {
+    void this.dispose().catch(() => {});
+  };
   private readonly onVisibilityChanged = (): void => {
     if (document.hidden) this.clearPending();
   };
@@ -182,6 +207,8 @@ export class StreamPreviewController {
   }
 
   private release(meta: StreamPreviewFrameMeta): void {
-    void window.bigoMediaService.streamPreviewService.releaseVideoFrame(meta.id, meta.token).catch(() => {});
+    void window.folioMediaService.streamPreviewService
+      .releaseVideoFrame(meta.id, meta.token)
+      .catch(() => {});
   }
 }

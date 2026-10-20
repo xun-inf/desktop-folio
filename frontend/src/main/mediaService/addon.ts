@@ -59,7 +59,6 @@ export interface StreamPreviewServiceApi {
   subscribeFrame(callback: (frame: FrameEvent) => void): Disposable;
 }
 
-
 export interface MediaServiceApi {
   initialize(): Promise<void>;
   getStatus(): Status;
@@ -69,8 +68,12 @@ export interface MediaServiceApi {
   stop(): Promise<void>;
 }
 
-export function loadMediaService(modulePath: string, options: MediaServiceOptions): MediaServiceApi {
-  const addon = require(modulePath) as { createMediaService(options: MediaServiceOptions): MediaServiceApi };
+export function loadMediaService(
+  modulePath: string,
+  options: MediaServiceOptions,
+): MediaServiceApi {
+  const addon = require(modulePath) as {
+    createMediaService(options: MediaServiceOptions): MediaServiceApi;
+  };
   return addon.createMediaService(options);
 }
-

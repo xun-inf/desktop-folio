@@ -45,17 +45,21 @@ public:
     bool send(const std::vector<uint8_t>& msg);
 
     // 会话标识：hello 握手成功后设置，后续 InvokeReq 必须携带相同值。
-    uint64_t session() const { return m_session.load(); }
-    void setSession(uint64_t value) { m_session.store(value); }
+    uint64_t session() const
+    {
+        return m_session.load();
+    }
+    void setSession(uint64_t value)
+    {
+        m_session.store(value);
+    }
 
     // 线程安全：构造 InvokeRsp 并发送。session 取自当前会话（hello 时服务
     // 先 setSession 再 reply，回执即携带新会话）。
-    bool reply(uint64_t requestId, bool success, const std::string& message,
-               const std::vector<uint8_t>& resultBytes);
+    bool reply(uint64_t requestId, bool success, const std::string& message, const std::vector<uint8_t>& resultBytes);
 
     // 线程安全：构造 Event 并发送。
-    bool emitEvent(const std::string& serviceId, const std::string& event,
-                   const std::vector<uint8_t>& payloadBytes);
+    bool emitEvent(const std::string& serviceId, const std::string& event, const std::vector<uint8_t>& payloadBytes);
 
 private:
     std::atomic<uint64_t> m_session {0};

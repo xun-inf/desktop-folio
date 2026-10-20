@@ -33,8 +33,7 @@ private:
     bool dispatchInvoke(const std::vector<uint8_t>& frame) noexcept;
 
     // 线程安全：构造 InvokeRsp 并发送（与 IpcServer::reply 相同语义）。
-    bool reply(uint64_t requestId, bool success, const std::string& message,
-               const std::vector<uint8_t>& resultBytes);
+    bool reply(uint64_t requestId, bool success, const std::string& message, const std::vector<uint8_t>& resultBytes);
 
 #if defined(_WIN32)
     HANDLE createPipe();

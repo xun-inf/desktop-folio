@@ -1,6 +1,7 @@
 ---
 Language: Cpp
 BasedOnStyle: None
+DisableFormat: false
 
 # 缩进
 IndentWidth: 4

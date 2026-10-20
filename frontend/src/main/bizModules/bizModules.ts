@@ -12,7 +12,8 @@ export class BizModulesContainer {
   private readonly subscriptions = new Set<() => void>();
 
   install(native: BizModulesApi): void {
-    if (this.native || this.state !== 'created') throw new Error('BizModulesContainer cannot be installed');
+    if (this.native || this.state !== 'created')
+      throw new Error('BizModulesContainer cannot be installed');
     if (!native || typeof native !== 'object') throw new Error('Invalid node-bizmodules host');
     for (const method of ['initialize', 'shutdown', 'getStatus']) ownMethod(native, method);
     const modules = createModuleRegistry(native);
@@ -24,19 +25,25 @@ export class BizModulesContainer {
     if (this.state === 'ready') return Promise.resolve();
     if (this.state === 'initializing') return this.initializePromise!;
     if (this.state !== 'created') return Promise.reject(new Error('BizModulesContainer is closed'));
-    if (!this.native) return Promise.reject(new Error('BizModulesContainer must be installed before use'));
+    if (!this.native)
+      return Promise.reject(new Error('BizModulesContainer must be installed before use'));
     const native = this.native;
     this.state = 'initializing';
-    this.initializePromise = Promise.resolve().then(() => {
-      if (this.state !== 'initializing') throw new Error('BizModulesContainer is closed');
-      return native.initialize();
-    }).then(() => {
-      if (this.state !== 'initializing') throw new Error('BizModulesContainer is closed');
-      this.state = 'ready';
-    }, error => {
-      if (this.state === 'initializing') this.state = 'created';
-      throw error;
-    });
+    this.initializePromise = Promise.resolve()
+      .then(() => {
+        if (this.state !== 'initializing') throw new Error('BizModulesContainer is closed');
+        return native.initialize();
+      })
+      .then(
+        () => {
+          if (this.state !== 'initializing') throw new Error('BizModulesContainer is closed');
+          this.state = 'ready';
+        },
+        (error) => {
+          if (this.state === 'initializing') this.state = 'created';
+          throw error;
+        },
+      );
     return this.initializePromise;
   }
 
@@ -45,21 +52,37 @@ export class BizModulesContainer {
     return this.native.getStatus();
   }
 
-  get testModule(): { echo(value: string): Promise<string>; publish(value: string): Promise<string>; onChanged(callback: (value: string) => void): () => void } {
+  get testModule(): {
+    echo(value: string): Promise<string>;
+    publish(value: string): Promise<string>;
+    onChanged(callback: (value: string) => void): () => void;
+  } {
     const requireModule = (): TestModuleApi => {
-      if (this.state !== 'ready' || !this.modules) throw new Error('BizModulesContainer is not ready');
+      if (this.state !== 'ready' || !this.modules)
+        throw new Error('BizModulesContainer is not ready');
       return this.modules.testModule;
     };
     return {
-      echo: value => { if (typeof value !== 'string') throw new TypeError('Invalid module arguments'); return requireModule().echo(value); },
-      publish: value => { if (typeof value !== 'string') throw new TypeError('Invalid module arguments'); return requireModule().publish(value); },
-      onChanged: handler => {
-        if (typeof handler !== 'function') throw new TypeError('Module callback must be a function');
+      echo: (value) => {
+        if (typeof value !== 'string') throw new TypeError('Invalid module arguments');
+        return requireModule().echo(value);
+      },
+      publish: (value) => {
+        if (typeof value !== 'string') throw new TypeError('Invalid module arguments');
+        return requireModule().publish(value);
+      },
+      onChanged: (handler) => {
+        if (typeof handler !== 'function')
+          throw new TypeError('Module callback must be a function');
         let disposed = false;
-        const subscription = requireModule().subscribe('changed', payload => { if (!disposed && this.state === 'ready') handler(payload); });
+        const subscription = requireModule().subscribe('changed', (payload) => {
+          if (!disposed && this.state === 'ready') handler(payload);
+        });
         const dispose = (): void => {
           if (disposed) return;
-          disposed = true; this.subscriptions.delete(dispose); subscription.dispose();
+          disposed = true;
+          this.subscriptions.delete(dispose);
+          subscription.dispose();
         };
         this.subscriptions.add(dispose);
         return dispose;
@@ -73,7 +96,11 @@ export class BizModulesContainer {
     this.shutdownPromise = Promise.resolve().then(async () => {
       const failures: unknown[] = [];
       for (const dispose of [...this.subscriptions]) {
-        try { dispose(); } catch (error) { failures.push(error); }
+        try {
+          dispose();
+        } catch (error) {
+          failures.push(error);
+        }
       }
       this.subscriptions.clear();
       await this.initializePromise?.catch(() => {});
@@ -85,11 +112,11 @@ export class BizModulesContainer {
         this.state = 'closed';
       }
       if (failures.length === 1) throw failures[0];
-      if (failures.length > 1) throw new AggregateError(failures, 'BizModulesContainer cleanup failed');
+      if (failures.length > 1)
+        throw new AggregateError(failures, 'BizModulesContainer cleanup failed');
     });
     return this.shutdownPromise;
   }
-
 }
 
 export const bizModules = new BizModulesContainer();

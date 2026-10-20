@@ -17,10 +17,18 @@ class Logger {
     this.level = level;
   }
 
-  debug(...args: unknown[]): void { this.#write('debug', args); }
-  info(...args: unknown[]): void { this.#write('info', args); }
-  warning(...args: unknown[]): void { this.#write('warning', args); }
-  error(...args: unknown[]): void { this.#write('error', args); }
+  debug(...args: unknown[]): void {
+    this.#write('debug', args);
+  }
+  info(...args: unknown[]): void {
+    this.#write('info', args);
+  }
+  warning(...args: unknown[]): void {
+    this.#write('warning', args);
+  }
+  error(...args: unknown[]): void {
+    this.#write('error', args);
+  }
 
   #write(level: LogLevel, args: unknown[]): void {
     if (levels[level] < levels[this.level]) return;

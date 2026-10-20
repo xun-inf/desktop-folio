@@ -14,9 +14,15 @@ public:
     void shutdown();
     void environmentCleanup();
     napi_value getStatus() const;
+
 private:
     napi_env m_env;
-    enum class State { Created, Ready, Closed } m_state;
-    std::vector<std::shared_ptr<Module> > m_modules;
+    enum class State
+    {
+        Created,
+        Ready,
+        Closed
+    } m_state;
+    std::vector<std::shared_ptr<Module>> m_modules;
 };
-}
+} // namespace node_bizmodules

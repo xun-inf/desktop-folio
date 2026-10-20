@@ -54,9 +54,8 @@ void ServiceRegistry::closeAll() const
     }
 }
 
-bool ServiceRegistry::dispatch(const char* serviceId, const char* method,
-                               const std::uint8_t* args, std::size_t argsSize,
-                               Service::ReplyWriter& reply)
+bool ServiceRegistry::dispatch(const char* serviceId, const char* method, const std::uint8_t* args,
+                               std::size_t argsSize, Service::ReplyWriter& reply)
 {
     if (serviceId == nullptr || method == nullptr)
     {

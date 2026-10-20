@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""bigostreamer 构建脚本：原生侧（C++/CMake）+ Electron（tsc + Vite）。
+"""Folio 构建脚本：原生侧（C++/CMake）+ Electron（tsc + Vite）。
 
 用法：
     python scripts/build.py [--config Debug]
@@ -23,14 +23,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CORE_DIR = ROOT / "core"
 BUILD_DIR = ROOT / "build" / "core"
-ELECTRON_DIR = ROOT / "electron"
+ELECTRON_DIR = ROOT / "frontend"
 # 随程序一起发出去的配置目录：图标（app.ico / tray.ico）和 bin 资源
 CONFIG_DIR = ROOT / "config"
 BIN_DIR = ROOT / "build" / "bin"
 
-# 产物里的 UI 进程名：Electron 运行时本体改叫 bigostreamer（electron-packager 同款做法），
+# 产物里的 UI 进程名：Electron 运行时本体改叫 folio（electron-packager 同款做法），
 # 进程名 / 任务栏 / 文件都和产品对得上；开发模式仍用 node_modules 里的 electron.exe
-UI_EXE_NAME = "bigostreamer"
+UI_EXE_NAME = "folio"
 LOG_DIR = ROOT / "build" / "logs"
 
 # rcedit：改 UI 进程 exe 的 PE 资源（图标 / 版本信息）。跑的是官方运行时本体，
@@ -43,8 +43,8 @@ RCEDIT_URL = "https://github.com/electron/rcedit/releases/download/v{0}/{1}".for
 RCEDIT_SHA256 = "3e7801db1a5edbec91b49a24a094aad776cb4515488ea5a4ca2289c400eade2a"
 RCEDIT_DIR = ROOT / "core" / "thirdparty" / "rcedit"
 
-# 写进 exe 资源的产品名（窗口标题见 electron/src/main/main.ts）
-APP_PRODUCT_NAME = "BIGO Streamer"
+# 写进 exe 资源的产品名（窗口标题见 frontend/src/main/window/mainWindow.ts）
+APP_PRODUCT_NAME = "Folio"
 APP_COMPANY_NAME = "ZXB"
 
 IS_WINDOWS = os.name == "nt"
@@ -161,7 +161,7 @@ def prepare_electron() -> None:
         installer = ELECTRON_DIR / "node_modules" / "electron" / "install.js"
         node = shutil.which("node")
         if node is None or not installer.exists():
-            raise SystemExit("[build] electron 未安装：先在 electron/ 执行 npm install")
+            raise SystemExit("[build] electron 未安装：先在 frontend/ 执行 npm install")
         run_command([node, installer], cwd=ELECTRON_DIR)
 
     run_command([npm, "run", "build"], cwd=ELECTRON_DIR)
@@ -248,7 +248,7 @@ def ensure_rcedit() -> Path:
 
 
 def electron_version() -> str:
-    """版本信息跟 electron/package.json 走，不用两边各写一份。"""
+    """版本信息跟 frontend/package.json 走，不用两边各写一份。"""
     package = json.loads((ELECTRON_DIR / "package.json").read_text(encoding="utf-8"))
     return str(package.get("version", "0.0.0"))
 
@@ -312,7 +312,7 @@ def stage(config: str) -> Path:
     产物目录（build/bin/<config>）就是最终的可分发目录：
         build/bin/<config>/
         ├── media-service.exe        # CMake 直接构建在这里（PE 图标带 config/app.ico）
-        ├── bigostreamer.exe + Chromium 运行时文件  # electron.exe 改的名，摊在根下（rcedit 换过图标/版本）
+        ├── folio.exe + Chromium 运行时文件  # electron.exe 改的名，摊在根下（rcedit 换过图标/版本）
         ├── <config/bin 里的东西>     # settings.ini 等直接摊在根下，不留 bin/ 这一层
         ├── resources/               # Electron 自己的目录，只放它自己的东西
         │   ├── app/                 # 我们的 Electron 应用（main.js 按 ../../src 找 preload）
@@ -320,7 +320,7 @@ def stage(config: str) -> Path:
         └── logs/                    # 首次运行时自动创建
 
     config/ 本身不进产物：图标是构建期输入（.rc / rcedit 用），只有 bin/ 是运行时文件。
-    启动：bigostreamer.exe resources/app
+    启动：folio.exe resources/app
     """
     binary = target_binary("media-service", config)
     if not binary.exists():
@@ -421,7 +421,7 @@ def build_all(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="bigostreamer 构建脚本")
+    parser = argparse.ArgumentParser(description="Folio 构建脚本")
     parser.add_argument("--config", default="Debug", help="Debug / Release")
     parser.add_argument(
         "--generator", default="", help="CMake generator，例如 Visual Studio 17 2022"

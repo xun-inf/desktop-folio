@@ -12,7 +12,7 @@ struct ModuleFactory
 };
 const ModuleFactory* moduleFactories();
 size_t moduleFactoryCount();
-void createAllModules(napi_env env, std::vector<std::shared_ptr<Module> >& modules);
+void createAllModules(napi_env env, std::vector<std::shared_ptr<Module>>& modules);
 void installAllModules(napi_env env, napi_value root, const std::shared_ptr<ModuleHost>& host,
-    const std::vector<std::shared_ptr<Module> >& modules);
-}
+                       const std::vector<std::shared_ptr<Module>>& modules);
+} // namespace node_bizmodules

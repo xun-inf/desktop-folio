@@ -6,14 +6,23 @@ namespace node_bizmodules
 {
 namespace
 {
-std::shared_ptr<Module> createTest(napi_env env) { return std::shared_ptr<Module>(new TestModule(env)); }
+std::shared_ptr<Module> createTest(napi_env env)
+{
+    return std::shared_ptr<Module>(new TestModule(env));
+}
 // This is the only native assembly point. No dynamic module lookup or business
 // method string dispatcher is exposed by the addon root.
 const ModuleFactory kFactories[] = {{"TestModule", "testModule", createTest}};
+} // namespace
+const ModuleFactory* moduleFactories()
+{
+    return kFactories;
 }
-const ModuleFactory* moduleFactories() { return kFactories; }
-size_t moduleFactoryCount() { return sizeof(kFactories) / sizeof(kFactories[0]); }
-void createAllModules(napi_env env, std::vector<std::shared_ptr<Module> >& modules)
+size_t moduleFactoryCount()
+{
+    return sizeof(kFactories) / sizeof(kFactories[0]);
+}
+void createAllModules(napi_env env, std::vector<std::shared_ptr<Module>>& modules)
 {
     std::set<std::string> ids;
     std::set<std::string> properties;
@@ -29,10 +38,11 @@ void createAllModules(napi_env env, std::vector<std::shared_ptr<Module> >& modul
     }
 }
 void installAllModules(napi_env env, napi_value root, const std::shared_ptr<ModuleHost>& host,
-    const std::vector<std::shared_ptr<Module> >& modules)
+                       const std::vector<std::shared_ptr<Module>>& modules)
 {
-    if (modules.size() != moduleFactoryCount()) throw std::runtime_error("Business module registry mismatch");
+    if (modules.size() != moduleFactoryCount())
+        throw std::runtime_error("Business module registry mismatch");
     for (size_t index = 0; index < modules.size(); ++index)
         property(env, root, kFactories[index].propertyName, modules[index]->createObject(root, host));
 }
-}
+} // namespace node_bizmodules

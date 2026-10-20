@@ -53,7 +53,7 @@ class MainWindow {
       minHeight: 400,
       frame: false,
       show: false,
-      title: 'BIGO Streamer',
+      title: 'Folio',
       backgroundColor: '#0f141a',
       icon: fs.existsSync(iconPath) ? iconPath : undefined,
       webPreferences: {
@@ -89,10 +89,17 @@ class MainWindow {
     target.webContents.on('console-message', (details) => {
       const message = 'renderer: ' + details.message;
       switch (details.level) {
-        case 'error': logger.error(message); break;
-        case 'warning': logger.warning(message); break;
-        case 'debug': logger.debug(message); break;
-        default: logger.info(message);
+        case 'error':
+          logger.error(message);
+          break;
+        case 'warning':
+          logger.warning(message);
+          break;
+        case 'debug':
+          logger.debug(message);
+          break;
+        default:
+          logger.info(message);
       }
     });
     target.webContents.on('did-finish-load', () => {
@@ -102,7 +109,8 @@ class MainWindow {
     });
     target.webContents.on('before-input-event', (event, input) => {
       if (!this.options.devtoolsEnabled || input.type !== 'keyDown') return;
-      const inspect = (input.control || input.meta) && input.shift && input.key.toLowerCase() === 'i';
+      const inspect =
+        (input.control || input.meta) && input.shift && input.key.toLowerCase() === 'i';
       if (input.key !== 'F12' && !inspect) return;
       event.preventDefault();
       if (target.webContents.isDevToolsOpened()) {
@@ -136,7 +144,7 @@ class MainWindow {
 
   accepts(event: IpcMainEvent | IpcMainInvokeEvent): boolean {
     const target = this.target;
-    return target !== null && event.sender === target.webContents
+    return target !== null && event.sender === target.webContents;
   }
 
   private markRendererUnavailable(): void {

@@ -2,15 +2,15 @@ include_guard(GLOBAL)
 
 include(FetchContent)
 
-set(BIGOSTREAMER_SPDLOG_VERSION "1.17.0" CACHE STRING
+set(FOLIO_SPDLOG_VERSION "1.17.0" CACHE STRING
   "spdlog version used by the native components")
-set(BIGOSTREAMER_SPDLOG_ROOT "" CACHE PATH
+set(FOLIO_SPDLOG_ROOT "" CACHE PATH
   "Optional local spdlog source root for offline builds")
 
-set(_BIGOSTREAMER_SPDLOG_SOURCE_SHA256
+set(_FOLIO_SPDLOG_SOURCE_SHA256
   "d8862955c6d74e5846b3f580b1605d2428b11d97a410d86e2fb13e857cd3a744")
 
-function(bigostreamer_add_spdlog)
+function(folio_add_spdlog)
   if(TARGET spdlog::spdlog)
     return()
   endif()
@@ -29,23 +29,23 @@ function(bigostreamer_add_spdlog)
   # 调试器输出也在依赖内部从 UTF-8 转换为 UTF-16。
   set(SPDLOG_WCHAR_SUPPORT "${WIN32}" CACHE BOOL "" FORCE)
 
-  if(BIGOSTREAMER_SPDLOG_ROOT)
+  if(FOLIO_SPDLOG_ROOT)
     get_filename_component(_spdlog_root
-      "${BIGOSTREAMER_SPDLOG_ROOT}" ABSOLUTE BASE_DIR "${BIGOSTREAMER_ROOT}")
+      "${FOLIO_SPDLOG_ROOT}" ABSOLUTE BASE_DIR "${FOLIO_ROOT}")
     if(NOT EXISTS "${_spdlog_root}/CMakeLists.txt")
       message(FATAL_ERROR
         "spdlog source not found: ${_spdlog_root}. "
-        "BIGOSTREAMER_SPDLOG_ROOT must point to a spdlog source tree.")
+        "FOLIO_SPDLOG_ROOT must point to a spdlog source tree.")
     endif()
     add_subdirectory("${_spdlog_root}"
-      "${CMAKE_BINARY_DIR}/_deps/bigostreamer_spdlog-build" EXCLUDE_FROM_ALL)
+      "${CMAKE_BINARY_DIR}/_deps/folio_spdlog-build" EXCLUDE_FROM_ALL)
   else()
-    FetchContent_Declare(bigostreamer_spdlog
+    FetchContent_Declare(folio_spdlog
       URL
-        "https://github.com/gabime/spdlog/archive/refs/tags/v${BIGOSTREAMER_SPDLOG_VERSION}.tar.gz"
-      URL_HASH "SHA256=${_BIGOSTREAMER_SPDLOG_SOURCE_SHA256}"
+        "https://github.com/gabime/spdlog/archive/refs/tags/v${FOLIO_SPDLOG_VERSION}.tar.gz"
+      URL_HASH "SHA256=${_FOLIO_SPDLOG_SOURCE_SHA256}"
       DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
-    FetchContent_MakeAvailable(bigostreamer_spdlog)
+    FetchContent_MakeAvailable(folio_spdlog)
   endif()
 
   if(NOT TARGET spdlog::spdlog)

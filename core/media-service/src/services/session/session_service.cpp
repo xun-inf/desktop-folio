@@ -15,9 +15,7 @@ std::shared_ptr<Service> SessionService::createService(IpcServer* server, EventL
     return std::shared_ptr<Service>(new SessionService(server, eventLoop));
 }
 
-SessionService::SessionService(IpcServer* server, EventLoop* eventLoop)
-    : ServiceBase(server)
-    , m_eventLoop(eventLoop)
+SessionService::SessionService(IpcServer* server, EventLoop* eventLoop) : ServiceBase(server), m_eventLoop(eventLoop)
 {
     this->registerMethod<services::HelloArgs>("hello", &SessionService::hello);
     this->registerMethod<services::ShutdownArgs>("shutdown", &SessionService::shutdown);
@@ -26,8 +24,7 @@ SessionService::SessionService(IpcServer* server, EventLoop* eventLoop)
 bool SessionService::hello(const services::HelloArgs& args, ReplyWriter& reply)
 {
     IpcServer* server = this->server();
-    const bool compatible = args.version() == kProtocolVersion &&
-        (server == nullptr || server->session() == 0);
+    const bool compatible = args.version() == kProtocolVersion && (server == nullptr || server->session() == 0);
     if (!compatible)
     {
         replyError(reply, "Incompatible protocol or duplicate handshake");
@@ -37,10 +34,9 @@ bool SessionService::hello(const services::HelloArgs& args, ReplyWriter& reply)
     {
         server->setSession(1);
     }
-    replyResult<services::HelloResult>(reply, [server](flatbuffers::FlatBufferBuilder& builder)
-    {
-        return services::CreateHelloResult(builder, server ? server->session() : 0, true);
-    });
+    replyResult<services::HelloResult>(
+        reply, [server](flatbuffers::FlatBufferBuilder& builder)
+        { return services::CreateHelloResult(builder, server ? server->session() : 0, true); });
     return true;
 }
 

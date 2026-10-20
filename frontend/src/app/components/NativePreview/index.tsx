@@ -3,7 +3,17 @@ import { nativeWindowMgr } from '../../shared';
 import { observeNativeWindow, type NativeWindowLayout } from './nativeWindow';
 
 // 仅主窗口使用；layoutKey 改变时可主动同步仅位置变化的业务布局。
-export function NativePreview({ name = 'preview', visible = true, layoutKey, ariaLabel = 'Native video region' }: { name?: string; visible?: boolean; layoutKey?: string | number; ariaLabel?: string }) {
+export function NativePreview({
+  name = 'preview',
+  visible = true,
+  layoutKey,
+  ariaLabel = 'Native video region',
+}: {
+  name?: string;
+  visible?: boolean;
+  layoutKey?: string | number;
+  ariaLabel?: string;
+}) {
   const host = useRef<HTMLElement>(null);
   const layout = useRef<NativeWindowLayout | null>(null);
   useLayoutEffect(() => {
@@ -18,7 +28,9 @@ export function NativePreview({ name = 'preview', visible = true, layoutKey, ari
     window.addEventListener('unload', retire, { once: true });
     void nativeWindowMgr.create(name).catch(console.error);
     layout.current = observeNativeWindow(host.current, {
-      setRect: rect => { void nativeWindowMgr.setRect(name, rect).catch(console.error); },
+      setRect: (rect) => {
+        void nativeWindowMgr.setRect(name, rect).catch(console.error);
+      },
     });
     return () => {
       window.removeEventListener('pagehide', retire);
@@ -33,5 +45,13 @@ export function NativePreview({ name = 'preview', visible = true, layoutKey, ari
     void nativeWindowMgr.setVisible(name, visible).catch(console.error);
     layout.current?.requestMeasure();
   }, [name, visible, layoutKey]);
-  return <main ref={host} className="native-window-host" id="native-window-host" hidden={!visible} aria-label={ariaLabel} />;
+  return (
+    <main
+      ref={host}
+      className="native-window-host"
+      id="native-window-host"
+      hidden={!visible}
+      aria-label={ariaLabel}
+    />
+  );
 }

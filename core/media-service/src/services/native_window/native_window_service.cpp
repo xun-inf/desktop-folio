@@ -233,7 +233,8 @@ bool NativeWindowService::releaseWindow(NativeWindowId id)
     {
         return closeNativeWindow(id);
     }
-    if (!closeNativeWindow(id)) return false;
+    if (!closeNativeWindow(id))
+        return false;
     m_nativeWindows.erase(id);
     return true;
 }

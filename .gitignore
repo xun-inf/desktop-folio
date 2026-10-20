@@ -1,7 +1,7 @@
 # 构建产物
 build/
-electron/dist/
-electron/node_modules/
+frontend/dist/
+frontend/node_modules/
 node_modules/
 
 # 可选的本地 FlatBuffers 覆盖（默认由 CMake 下载到 build/）
@@ -26,5 +26,5 @@ __pycache__/
 tests/
 
 # Electron build manifests
-!electron/package.json
-!electron/package-lock.json
+!frontend/package.json
+!frontend/package-lock.json

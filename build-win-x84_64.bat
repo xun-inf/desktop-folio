@@ -1,5 +1,5 @@
 @echo off
-rem bigostreamer: one-click build for Windows x64.
+rem folio: one-click build for Windows x64.
 rem Builds the C++ core (build/core) and the Electron app, same as:
 rem     python scripts\build.py --generator "Visual Studio 17 2022" --toolset v143 [--config Debug^|Release]
 setlocal

@@ -31,20 +31,29 @@ class ChildWindow {
       parent,
       frame: false,
       skipTaskbar: true,
-      width: 800, height: 600, minWidth: 480, minHeight: 320,
-      show: false, title: '设置', backgroundColor: '#0f141a',
+      width: 800,
+      height: 600,
+      minWidth: 480,
+      minHeight: 320,
+      show: false,
+      title: '设置',
+      backgroundColor: '#0f141a',
       webPreferences: {
         preload: options.preload,
-        nodeIntegration: false, contextIsolation: true, sandbox: true,
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: true,
       },
     });
     target.setMenu(null);
     this.window = target;
-    target.once('closed', () => { this.window = null; });
+    target.once('closed', () => {
+      this.window = null;
+    });
     popupWindowMgr.register('child', target.id, undefined, options.pageUrl);
     const url = new URL(options.pageUrl);
     url.searchParams.set('id', 'child');
-    target.loadURL(url.href).catch(error => {
+    target.loadURL(url.href).catch((error) => {
       logger.error('child renderer load failed:', error);
     });
   }

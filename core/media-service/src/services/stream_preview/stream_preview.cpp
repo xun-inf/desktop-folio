@@ -40,9 +40,7 @@ void StreamPreview::close()
 }
 
 StreamPreviewPrivate::StreamPreviewPrivate(StreamPreview::FrameReady ready, StreamPreview::ErrorCallback error)
-    : m_ready(std::move(ready))
-    , m_error(std::move(error))
-    , m_worker([this] { run(); })
+    : m_ready(std::move(ready)), m_error(std::move(error)), m_worker([this] { run(); })
 {
 }
 
@@ -145,12 +143,15 @@ void StreamPreviewPrivate::run()
             std::array<uint64_t, 3> released {};
             {
                 std::unique_lock<std::mutex> lock(m_mutex);
-                m_changed.wait(lock, [this]
-                {
-                    return m_closed ||
-                        (m_pending && std::find(m_inFlight.begin(), m_inFlight.end(), 0) != m_inFlight.end()) ||
-                        std::any_of(m_released.begin(), m_released.end(), [](uint64_t token) { return token != 0; });
-                });
+                m_changed.wait(lock,
+                               [this]
+                               {
+                                   return m_closed ||
+                                          (m_pending &&
+                                           std::find(m_inFlight.begin(), m_inFlight.end(), 0) != m_inFlight.end()) ||
+                                          std::any_of(m_released.begin(), m_released.end(),
+                                                      [](uint64_t token) { return token != 0; });
+                               });
                 if (m_closed)
                 {
                     return;

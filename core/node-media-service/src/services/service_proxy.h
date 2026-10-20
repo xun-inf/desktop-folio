@@ -30,4 +30,3 @@ protected:
     Transport* m_transport;
 };
 } // namespace node_media_service
-

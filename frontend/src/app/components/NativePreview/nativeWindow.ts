@@ -1,9 +1,15 @@
 import type { NativeWindowRect } from '../../types';
 
-export interface NativeWindowLayout { requestMeasure(): void; dispose(): void }
+export interface NativeWindowLayout {
+  requestMeasure(): void;
+  dispose(): void;
+}
 
 // 业务布局只改变位置时，主动调用返回的 requestMeasure。
-export function observeNativeWindow(host: HTMLElement, api: { setRect(rect: NativeWindowRect): void }): NativeWindowLayout {
+export function observeNativeWindow(
+  host: HTMLElement,
+  api: { setRect(rect: NativeWindowRect): void },
+): NativeWindowLayout {
   let disposed = false;
   let frame = 0;
   let resolutionQuery: MediaQueryList | undefined;

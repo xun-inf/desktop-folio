@@ -17,25 +17,83 @@ public:
     const std::string& logPath() const;
 
     // An explicit local-file probe is separate from the default IPC service.
-    bool sdkProbeRequested() const { return m_sdkProbeRequested && !m_sdkSceneServiceRequested && !m_sdkDeviceServiceRequested && !m_sdkLiveServiceRequested; }
-    bool sdkRuntimeRequested() const { return m_sdkProbeRequested; }
-    bool sdkSceneServiceRequested() const { return m_sdkSceneServiceRequested; }
-    bool sdkDeviceServiceRequested() const { return m_sdkDeviceServiceRequested; }
-    bool sdkLiveServiceRequested() const { return m_sdkLiveServiceRequested; }
-    bool sdkSceneMetadataVerified() const { return m_sdkSceneMetadataVerified; }
-    bool sdkLifecycleProbeRequested() const { return m_sdkLifecycleProbeRequested; }
-    const std::string& sdkLifecycleStage() const { return m_sdkLifecycleStage; }
-    bool sdkDeviceProbeRequested() const { return m_sdkDeviceProbeRequested; }
-    bool sdkSceneFramesRequested() const { return m_sdkSceneFramesRequested; }
-    bool sdkSceneProbeRequested() const { return m_sdkSceneProbeRequested; }
-    bool sdkProbeOptionsValid() const { return m_sdkProbeOptionsValid; }
-    const std::string& sdkRoot() const { return m_sdkRoot; }
-    const std::string& cryptoRoot() const { return m_cryptoRoot; }
-    const std::string& sdkFile() const { return m_sdkFile; }
-    const std::string& sdkReport() const { return m_sdkReport; }
-    uint32_t sdkTargetFrames() const { return m_sdkTargetFrames; }
-    uint32_t sdkTimeoutMs() const { return m_sdkTimeoutMs; }
-    uint32_t sdkCycles() const { return m_sdkCycles; }
+    bool sdkProbeRequested() const
+    {
+        return m_sdkProbeRequested && !m_sdkSceneServiceRequested && !m_sdkDeviceServiceRequested &&
+               !m_sdkLiveServiceRequested;
+    }
+    bool sdkRuntimeRequested() const
+    {
+        return m_sdkProbeRequested;
+    }
+    bool sdkSceneServiceRequested() const
+    {
+        return m_sdkSceneServiceRequested;
+    }
+    bool sdkDeviceServiceRequested() const
+    {
+        return m_sdkDeviceServiceRequested;
+    }
+    bool sdkLiveServiceRequested() const
+    {
+        return m_sdkLiveServiceRequested;
+    }
+    bool sdkSceneMetadataVerified() const
+    {
+        return m_sdkSceneMetadataVerified;
+    }
+    bool sdkLifecycleProbeRequested() const
+    {
+        return m_sdkLifecycleProbeRequested;
+    }
+    const std::string& sdkLifecycleStage() const
+    {
+        return m_sdkLifecycleStage;
+    }
+    bool sdkDeviceProbeRequested() const
+    {
+        return m_sdkDeviceProbeRequested;
+    }
+    bool sdkSceneFramesRequested() const
+    {
+        return m_sdkSceneFramesRequested;
+    }
+    bool sdkSceneProbeRequested() const
+    {
+        return m_sdkSceneProbeRequested;
+    }
+    bool sdkProbeOptionsValid() const
+    {
+        return m_sdkProbeOptionsValid;
+    }
+    const std::string& sdkRoot() const
+    {
+        return m_sdkRoot;
+    }
+    const std::string& cryptoRoot() const
+    {
+        return m_cryptoRoot;
+    }
+    const std::string& sdkFile() const
+    {
+        return m_sdkFile;
+    }
+    const std::string& sdkReport() const
+    {
+        return m_sdkReport;
+    }
+    uint32_t sdkTargetFrames() const
+    {
+        return m_sdkTargetFrames;
+    }
+    uint32_t sdkTimeoutMs() const
+    {
+        return m_sdkTimeoutMs;
+    }
+    uint32_t sdkCycles() const
+    {
+        return m_sdkCycles;
+    }
 
 private:
     std::string m_pipeName;

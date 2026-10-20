@@ -1,8 +1,8 @@
 ﻿param([switch]$Install)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$version = (Get-Content "$root/electron/package.json" -Raw | ConvertFrom-Json).version
-$setup = "$root/build/installer/live-streamer-$version-windows-x64-setup.exe"
+$version = (Get-Content "$root/frontend/package.json" -Raw | ConvertFrom-Json).version
+$setup = "$root/build/installer/folio-$version-windows-x64-setup.exe"
 $evidence = "$root/build/installer-ui-smoke"
 New-Item -ItemType Directory -Force $evidence | Out-Null
 Add-Type -AssemblyName System.Drawing
@@ -30,7 +30,7 @@ function Button-Text([IntPtr]$Window) {
   [SetupUi]::GetWindowText([SetupUi]::GetDlgItem($Window, 100), $text, 128) | Out-Null
   return $text.ToString()
 }
-if ([SetupUi]::FindWindow('LiveStreamerSetupWindow', 'LIVE Streamer 安装程序') -ne [IntPtr]::Zero) {
+if ([SetupUi]::FindWindow('FolioSetupWindow', 'Folio 安装程序') -ne [IntPtr]::Zero) {
   throw 'Close the existing installer before running the UI check.'
 }
 foreach ($state in @('welcome', 'progress', 'complete', 'error')) {
@@ -57,14 +57,14 @@ if ((Test-Path $registry) -or (Test-Path "HKLM:\Software\$guid")) {
 $target = [IO.Path]::GetFullPath((Join-Path $evidence ('install space ' + [guid]::NewGuid().ToString('N'))))
 $process = Start-Process -FilePath $setup -WindowStyle Hidden -PassThru
 try {
-  Wait-For { [SetupUi]::FindWindow('LiveStreamerSetupWindow', 'LIVE Streamer 安装程序') -ne [IntPtr]::Zero }
-  $window = [SetupUi]::FindWindow('LiveStreamerSetupWindow', 'LIVE Streamer 安装程序')
+  Wait-For { [SetupUi]::FindWindow('FolioSetupWindow', 'Folio 安装程序') -ne [IntPtr]::Zero }
+  $window = [SetupUi]::FindWindow('FolioSetupWindow', 'Folio 安装程序')
   [SetupUi]::SendText([SetupUi]::GetDlgItem($window, 104), 0xC, [IntPtr]::Zero, $target) | Out-Null
   [SetupUi]::SendMessage($window, 0x111, [IntPtr]100, [IntPtr]::Zero) | Out-Null
   Start-Sleep -Milliseconds 300
   Wait-For { (Button-Text $window) -in @('立即体验', '返回重试') } 180
   if ((Button-Text $window) -ne '立即体验') { throw 'Installer reported failure' }
-  foreach ($file in @('live-streamer.exe', 'media-service.exe', 'node-streampreview.node', 'resources/app.asar')) {
+  foreach ($file in @('folio.exe', 'media-service.exe', 'node-streampreview.node', 'resources/app.asar')) {
     if (-not (Test-Path (Join-Path $target $file))) { throw "Missing installed file: $file" }
   }
   if ((Get-ItemProperty $registry).InstallLocation -ne $target) { throw 'Install registry path mismatch' }
@@ -80,7 +80,7 @@ try {
   if (-not $uninstaller) { throw 'Uninstaller missing' }
   $uninstall = Start-Process -FilePath $uninstaller.FullName -ArgumentList '/S' -WindowStyle Hidden -PassThru
   if (-not $uninstall.WaitForExit(60000)) { throw 'Uninstaller did not finish' }
-  Wait-For { -not (Test-Path "$target/live-streamer.exe") -and -not (Test-Path $registry) } 60
+  Wait-For { -not (Test-Path "$target/folio.exe") -and -not (Test-Path $registry) } 60
   Write-Output 'PASS: uninstall removed the application and installation registration'
 } finally {
   if (-not $process.HasExited) { $process.Kill() }

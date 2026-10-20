@@ -67,4 +67,3 @@ napi_value numberArray(napi_env env, const flatbuffers::Vector<T>* values)
 }
 napi_value stringArray(napi_env env, const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>* values);
 } // namespace node_media_service
-

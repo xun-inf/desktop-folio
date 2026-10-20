@@ -47,7 +47,8 @@ bool aborted(HANDLE stopEvent, HANDLE disconnectEvent)
 }
 
 // 取消后等待终态，保证栈上的 OVERLAPPED 和调用方缓冲区不会早于 I/O 释放。
-bool waitForIo(HANDLE pipe, OVERLAPPED* overlapped, HANDLE stopEvent, HANDLE disconnectEvent, DWORD* bytes, DWORD timeout = INFINITE)
+bool waitForIo(HANDLE pipe, OVERLAPPED* overlapped, HANDLE stopEvent, HANDLE disconnectEvent, DWORD* bytes,
+               DWORD timeout = INFINITE)
 {
     const HANDLE events[] = {stopEvent, disconnectEvent, overlapped->hEvent};
     const DWORD wait = ::WaitForMultipleObjects(3, events, FALSE, timeout);
@@ -107,12 +108,15 @@ bool writeExact(HANDLE pipe, HANDLE ioEvent, HANDLE stopEvent, HANDLE disconnect
         DWORD bytes = 0;
         const DWORD chunk = static_cast<DWORD>(size > MAXDWORD ? MAXDWORD : size);
         const uint64_t tick = ::GetTickCount64();
-        if (tick >= deadline) { ::SetLastError(ERROR_TIMEOUT); return false; }
+        if (tick >= deadline)
+        {
+            ::SetLastError(ERROR_TIMEOUT);
+            return false;
+        }
         if (!::WriteFile(pipe, cursor, chunk, &bytes, &overlapped))
         {
             if (::GetLastError() != ERROR_IO_PENDING ||
-                !waitForIo(pipe, &overlapped, stopEvent, disconnectEvent, &bytes,
-                    static_cast<DWORD>(deadline - tick)))
+                !waitForIo(pipe, &overlapped, stopEvent, disconnectEvent, &bytes, static_cast<DWORD>(deadline - tick)))
             {
                 return false;
             }
@@ -125,8 +129,7 @@ bool writeExact(HANDLE pipe, HANDLE ioEvent, HANDLE stopEvent, HANDLE disconnect
     return true;
 }
 
-bool readFrame(HANDLE pipe, HANDLE ioEvent, HANDLE stopEvent, HANDLE disconnectEvent,
-               std::vector<std::uint8_t>* frame)
+bool readFrame(HANDLE pipe, HANDLE ioEvent, HANDLE stopEvent, HANDLE disconnectEvent, std::vector<std::uint8_t>* frame)
 {
     std::uint8_t prefix[kPrefixSize] = {};
     if (!readExact(pipe, ioEvent, stopEvent, disconnectEvent, prefix, kPrefixSize))
@@ -417,8 +420,8 @@ bool IpcServerPrivate::send(const std::vector<uint8_t>& message)
     std::unique_lock<std::mutex> lock(m_sendMutex, std::defer_lock);
     while (!lock.try_lock())
     {
-        if (aborted(m_stopEvent, m_disconnectEvent) ||
-            ::GetTickCount64() >= deadline) return false;
+        if (aborted(m_stopEvent, m_disconnectEvent) || ::GetTickCount64() >= deadline)
+            return false;
         ::WaitForSingleObject(m_stopEvent, 1);
     }
     if (!m_running.load() || !m_connected.load() || m_pipe == INVALID_HANDLE_VALUE)

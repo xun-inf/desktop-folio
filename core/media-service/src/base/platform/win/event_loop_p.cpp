@@ -10,7 +10,7 @@ namespace
 {
 
 const char kComponent[] = "event-loop";
-const wchar_t kHostClass[] = L"BigoStreamerEventLoopHost";
+const wchar_t kHostClass[] = L"FolioEventLoopHost";
 constexpr UINT kMsgWake = WM_APP + 1;
 
 // 日志失败也不能把异常带出 Win32 的窗口过程。

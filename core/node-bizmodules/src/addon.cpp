@@ -9,20 +9,35 @@ struct RootContext
 {
     std::shared_ptr<ModuleHost> host;
     bool cleanupHookActive;
-    explicit RootContext(napi_env env) : host(new ModuleHost(env)), cleanupHookActive(false) {}
+    explicit RootContext(napi_env env) : host(new ModuleHost(env)), cleanupHookActive(false)
+    {
+    }
 };
-enum class Operation { Initialize, Shutdown, Status };
+enum class Operation
+{
+    Initialize,
+    Shutdown,
+    Status
+};
 struct MethodContext
 {
     std::shared_ptr<ModuleHost> host;
     Operation operation;
-    MethodContext(const std::shared_ptr<ModuleHost>& runtime, Operation op) : host(runtime), operation(op) {}
+    MethodContext(const std::shared_ptr<ModuleHost>& runtime, Operation op) : host(runtime), operation(op)
+    {
+    }
 };
 void cleanupHook(void* data)
 {
     RootContext* context = static_cast<RootContext*>(data);
     context->cleanupHookActive = false;
-    try { context->host->environmentCleanup(); } catch (...) {}
+    try
+    {
+        context->host->environmentCleanup();
+    }
+    catch (...)
+    {
+    }
 }
 void rootFinalizer(napi_env env, void* data, void*)
 {
@@ -36,9 +51,14 @@ void rootFinalizer(napi_env env, void* data, void*)
         }
         context->host->environmentCleanup();
     }
-    catch (...) {}
+    catch (...)
+    {
+    }
 }
-void methodFinalizer(napi_env, void* data, void*) { delete static_cast<MethodContext*>(data); }
+void methodFinalizer(napi_env, void* data, void*)
+{
+    delete static_cast<MethodContext*>(data);
+}
 napi_value methodCallback(napi_env env, napi_callback_info info)
 {
     MethodContext* context = nullptr;
@@ -49,27 +69,48 @@ napi_value methodCallback(napi_env env, napi_callback_info info)
         context = static_cast<MethodContext*>(data);
         switch (context->operation)
         {
-        case Operation::Initialize: context->host->initialize(); return promise(env, undefined(env));
-        case Operation::Shutdown: context->host->shutdown(); return promise(env, undefined(env));
-        case Operation::Status: return context->host->getStatus();
+        case Operation::Initialize:
+            context->host->initialize();
+            return promise(env, undefined(env));
+        case Operation::Shutdown:
+            context->host->shutdown();
+            return promise(env, undefined(env));
+        case Operation::Status:
+            return context->host->getStatus();
         }
     }
     catch (const std::exception& error)
     {
         if (context && context->operation != Operation::Status)
         {
-            try { return rejectCurrent(env, error); }
-            catch (const std::exception& rejectionError) { throwError(env, rejectionError.what()); return nullptr; }
-            catch (...) { throwError(env, "Cannot reject business lifecycle operation"); return nullptr; }
+            try
+            {
+                return rejectCurrent(env, error);
+            }
+            catch (const std::exception& rejectionError)
+            {
+                throwError(env, rejectionError.what());
+                return nullptr;
+            }
+            catch (...)
+            {
+                throwError(env, "Cannot reject business lifecycle operation");
+                return nullptr;
+            }
         }
         throwError(env, error.what());
         return nullptr;
     }
-    catch (...) { throwError(env, "Business host callback failed"); return nullptr; }
+    catch (...)
+    {
+        throwError(env, "Business host callback failed");
+        return nullptr;
+    }
     throwError(env, "Unknown business host operation");
     return nullptr;
 }
-void addMethod(napi_env env, napi_value root, const std::shared_ptr<ModuleHost>& host, const char* name, Operation operation)
+void addMethod(napi_env env, napi_value root, const std::shared_ptr<ModuleHost>& host, const char* name,
+               Operation operation)
 {
     std::unique_ptr<MethodContext> context(new MethodContext(host, operation));
     napi_value function = nullptr;
@@ -95,11 +136,19 @@ napi_value create(napi_env env, napi_callback_info)
         wrapped->cleanupHookActive = true;
         return root;
     }
-    catch (const std::exception& error) { throwError(env, error.what()); return nullptr; }
-    catch (...) { throwError(env, "Cannot create business host"); return nullptr; }
+    catch (const std::exception& error)
+    {
+        throwError(env, error.what());
+        return nullptr;
+    }
+    catch (...)
+    {
+        throwError(env, "Cannot create business host");
+        return nullptr;
+    }
 }
-}
-}
+} // namespace
+} // namespace node_bizmodules
 
 NAPI_MODULE_INIT()
 {
@@ -108,10 +157,18 @@ NAPI_MODULE_INIT()
         node_bizmodules::validateHostApi();
         napi_value create = nullptr;
         node_bizmodules::check(NBM_NAPI(napi_create_function)(env, "createBizModules", NAPI_AUTO_LENGTH,
-            node_bizmodules::create, nullptr, &create));
+                                                              node_bizmodules::create, nullptr, &create));
         node_bizmodules::property(env, exports, "createBizModules", create);
         return exports;
     }
-    catch (const std::exception& error) { node_bizmodules::throwError(env, error.what()); return nullptr; }
-    catch (...) { node_bizmodules::throwError(env, "Cannot initialize business addon"); return nullptr; }
+    catch (const std::exception& error)
+    {
+        node_bizmodules::throwError(env, error.what());
+        return nullptr;
+    }
+    catch (...)
+    {
+        node_bizmodules::throwError(env, "Cannot initialize business addon");
+        return nullptr;
+    }
 }

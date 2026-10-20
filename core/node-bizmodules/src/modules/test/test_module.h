@@ -13,7 +13,8 @@ public:
     napi_value echo(napi_value value) const;
     napi_value publish(napi_value value);
     uint32_t subscribeChanged(const std::string& event, napi_value callback);
+
 private:
     bool acceptsEvent(const std::string& event) const override;
 };
-}
+} // namespace node_bizmodules

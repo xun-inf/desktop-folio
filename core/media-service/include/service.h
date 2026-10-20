@@ -38,11 +38,12 @@ public:
 
     // 分发一个方法调用；args 为 Args 表的 FlatBuffer 字节。
     // 返回 false 表示不识别该方法（调用方按失败回执处理）。
-    virtual bool invoke(const char* method, const std::uint8_t* args, std::size_t argsSize,
-                        ReplyWriter& reply) = 0;
+    virtual bool invoke(const char* method, const std::uint8_t* args, std::size_t argsSize, ReplyWriter& reply) = 0;
 
     // 应用退出前的生命周期收口（ServiceRegistry::closeAll 统一调用，默认空实现）。
-    virtual void closeAll() {}
+    virtual void closeAll()
+    {
+    }
 
 protected:
     Service() = default;
@@ -66,9 +67,9 @@ protected:
         flatbuffers::FlatBufferBuilder builder;
         const auto body = build(builder);
         builder.Finish(body);
-        reply.write(true, "",
-                    std::vector<std::uint8_t>(builder.GetBufferPointer(),
-                                              builder.GetBufferPointer() + builder.GetSize()));
+        reply.write(
+            true, "",
+            std::vector<std::uint8_t>(builder.GetBufferPointer(), builder.GetBufferPointer() + builder.GetSize()));
     }
 };
 
@@ -85,13 +86,11 @@ class ServiceBase : public Service
 {
 public:
     // server 用于事件发射（IpcServer::emitEvent）；不发射事件的服务可传 nullptr。
-    explicit ServiceBase(IpcServer* server = nullptr)
-        : m_server(server)
+    explicit ServiceBase(IpcServer* server = nullptr) : m_server(server)
     {
     }
 
-    bool invoke(const char* method, const std::uint8_t* args, std::size_t argsSize,
-                ReplyWriter& reply) override
+    bool invoke(const char* method, const std::uint8_t* args, std::size_t argsSize, ReplyWriter& reply) override
     {
         if (method == nullptr)
         {
@@ -117,8 +116,7 @@ protected:
     void registerMethod(const char* name, bool (Derived::*handler)(const ArgsT&, ReplyWriter&))
     {
         using Traits = services::traits::Root<ArgsT>;
-        m_methods[name] = [this, handler](const std::uint8_t* args, std::size_t argsSize,
-                                          ReplyWriter& reply) -> bool
+        m_methods[name] = [this, handler](const std::uint8_t* args, std::size_t argsSize, ReplyWriter& reply) -> bool
         {
             if (args == nullptr || argsSize == 0)
             {
@@ -145,8 +143,8 @@ protected:
         flatbuffers::FlatBufferBuilder builder;
         const auto body = build(builder);
         builder.Finish(body);
-        const std::vector<std::uint8_t> payload(
-            builder.GetBufferPointer(), builder.GetBufferPointer() + builder.GetSize());
+        const std::vector<std::uint8_t> payload(builder.GetBufferPointer(),
+                                                builder.GetBufferPointer() + builder.GetSize());
         m_server->emitEvent(serviceId(), event, payload);
     }
 

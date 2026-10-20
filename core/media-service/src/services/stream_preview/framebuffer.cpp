@@ -34,8 +34,7 @@ bool VideoFrameBuffer::valid(const VideoFrameView& source)
     {
         const auto& plane = source.planes[i];
         const std::size_t rows = i == 0 ? source.height : source.height / 2;
-        if (!plane.data || plane.stride < widths[i] ||
-            plane.stride > std::numeric_limits<uint32_t>::max() ||
+        if (!plane.data || plane.stride < widths[i] || plane.stride > std::numeric_limits<uint32_t>::max() ||
             (rows > 1 && plane.stride > (std::numeric_limits<std::size_t>::max() - widths[i]) / (rows - 1)) ||
             plane.size < (rows - 1) * plane.stride + widths[i])
         {
@@ -51,7 +50,9 @@ bool VideoFrameBuffer::copy(const VideoFrameView& source)
     {
         return false;
     }
-    const unsigned count = source.format == VideoPixelFormat::BGRA ? 1 : source.format == VideoPixelFormat::I420 ? 3 : 2;
+    const unsigned count = source.format == VideoPixelFormat::BGRA   ? 1
+                           : source.format == VideoPixelFormat::I420 ? 3
+                                                                     : 2;
     std::array<std::size_t, 3> widths {source.width, source.width / 2, source.width / 2};
     if (source.format == VideoPixelFormat::BGRA)
     {
